@@ -118,7 +118,7 @@ export default function CheckoutPage() {
 
       clearCart();
       toast.success("🎉 Order placed successfully!");
-      router.push(`/orders/${data.orderId}`);
+      window.location.href = `/orders/${data.orderId}`;
     } catch (err) {
       toast.error((err as Error).message || "Could not place order.");
     } finally {
