@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cluster Studio - Personalized Gifts & Custom Products</title>
+  <link rel="icon" href="/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: '#670D1F',
+            'brand-dark': '#520817',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .font-serif { font-family: 'Playfair Display', serif; }
+    .font-script { font-family: 'Dancing Script', cursive; }
+    .font-sans { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-[#FAF8F5] text-slate-900 min-h-screen flex flex-col font-sans selection:bg-[#670D1F] selection:text-white">
+
+  <!-- Announcement Bar -->
+  <div class="bg-[#520817] text-white text-[11px] font-bold py-2 px-4 text-center tracking-wider flex items-center justify-center gap-2">
+    <span>✨ FREE SHIPPING ON ALL ORDERS ABOVE ₹499 ACROSS INDIA • SAME DAY DISPATCH ✨</span>
+  </div>
+
+  <!-- Navbar -->
+  <header class="bg-white/95 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200/80 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-18 flex items-center justify-between gap-4">
+      <a href="/" class="flex items-center gap-2.5 group">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#670D1F] to-[#A01B34] flex items-center justify-center text-white font-bold text-xl shadow-md group-hover:scale-105 transition-transform">
+          CS
+        </div>
+        <div>
+          <span class="font-serif text-2xl font-bold tracking-tight text-[#670D1F] block leading-none">Cluster Studio</span>
+          <span class="text-[9px] uppercase tracking-widest font-extrabold text-slate-400 block mt-0.5">Personalized Gifts</span>
+        </div>
+      </a>
+
+      <!-- Search Input -->
+      <div class="hidden md:flex flex-1 max-w-md mx-4">
+        <div class="relative w-full">
+          <input id="searchInput" type="text" placeholder="Search custom mugs, keychains, pillows, frames..." 
+            class="w-full bg-slate-50 border border-slate-200 rounded-full py-2 pl-10 pr-4 text-xs focus:outline-none focus:ring-2 focus:ring-[#670D1F]/20 focus:border-[#670D1F] transition-all"
+            oninput="filterProducts()">
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5"></i>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <a href="/admin" class="text-xs font-bold text-slate-700 hover:text-[#670D1F] bg-slate-100 hover:bg-slate-200 px-3 py-2 rounded-xl transition-colors flex items-center gap-1.5 border border-slate-200">
+          <i data-lucide="shield" class="w-3.5 h-3.5"></i>
+          <span>Admin</span>
+        </a>
+
+        <button onclick="openCart()" class="relative bg-[#670D1F] hover:bg-[#520817] text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm transition-all">
+          <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Cart</span>
+          <span id="cartCountBadge" class="bg-amber-400 text-slate-900 text-[10px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Filter Pills -->
+  <div class="bg-white border-b border-slate-200/80 py-3 sticky top-18 z-30 shadow-2xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-4 overflow-x-auto hide-scrollbar">
+      <div class="flex items-center gap-2 shrink-0" id="categoryPills">
+        <button onclick="selectCategory('All')" class="cat-pill active-cat px-4 py-1.5 rounded-full text-xs font-bold bg-[#670D1F] text-white shadow-xs">All Products (17)</button>
+        <button onclick="selectCategory('Mugs')" class="cat-pill px-4 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">Mugs & Magic Mugs</button>
+        <button onclick="selectCategory('Bottles & Sippers')" class="cat-pill px-4 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">Bottles & Sippers</button>
+        <button onclick="selectCategory('Cushions & Pillows')" class="cat-pill px-4 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">Cushions & Pillows</button>
+        <button onclick="selectCategory('Keychains')" class="cat-pill px-4 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">Keychains</button>
+        <button onclick="selectCategory('Photo Frames')" class="cat-pill px-4 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">Photo Frames</button>
+      </div>
+
+      <div class="flex items-center gap-2 shrink-0">
+        <span class="text-xs font-bold text-slate-500 hidden sm:inline">Price:</span>
+        <select id="priceFilter" onchange="filterProducts()" class="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl px-3 py-1.5 focus:outline-none">
+          <option value="all">Any Price</option>
+          <option value="199">Under ₹199</option>
+          <option value="299">Under ₹299</option>
+          <option value="499">Under ₹499</option>
+          <option value="999">Under ₹999</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hero Header -->
+  <section class="bg-gradient-to-b from-rose-50/80 via-white to-transparent py-10 sm:py-14 px-4 border-b border-slate-100">
+    <div class="max-w-7xl mx-auto text-center space-y-3">
+      <span class="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-[#670D1F] bg-rose-100/90 px-3.5 py-1 rounded-full border border-rose-200">
+        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Premium 300 DPI Sublimation Printing
+      </span>
+      <h1 class="font-serif text-3xl sm:text-5xl font-bold text-slate-900 leading-tight">
+        Personalized Gifts, <span class="font-script text-[#670D1F] text-4xl sm:text-6xl block sm:inline">Crafted with Love</span>
+      </h1>
+      <p class="text-slate-600 text-xs sm:text-sm max-w-xl mx-auto">
+        Choose your product, upload your memorable photo or logo, and get high-definition custom printed gifts delivered to your doorstep.
+      </p>
+    </div>
+  </section>
+
+  <!-- Products Grid -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex-1 w-full">
+    <div class="flex items-center justify-between mb-6">
+      <h2 id="sectionTitle" class="font-serif text-xl sm:text-2xl font-bold text-slate-900">All Customizable Gifts</h2>
+      <span id="productCount" class="text-xs font-bold text-slate-500">Showing 17 products</span>
+    </div>
+
+    <div id="productsGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+      <!-- Products Injected Here -->
+    </div>
+  </main>
+
+  <!-- Customizer Lightbox Modal -->
+  <div id="customizerModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-xl w-full max-h-[92vh] overflow-y-auto shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div>
+          <span class="text-[10px] uppercase font-bold text-slate-400 block">Live Design Studio</span>
+          <h3 id="modalProductName" class="font-serif text-lg font-bold text-slate-900 truncate">Personalize Product</h3>
+        </div>
+        <button onclick="closeCustomizer()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold flex items-center justify-center">✕</button>
+      </div>
+
+      <!-- Live Mockup Studio -->
+      <div class="relative w-full aspect-square bg-slate-50 rounded-2xl overflow-hidden border border-slate-200 flex items-center justify-center">
+        <img id="modalBaseProductImg" src="" class="absolute inset-0 w-full h-full object-contain p-4 select-none pointer-events-none z-10" />
+        <canvas id="customCanvas" width="400" height="400" class="absolute inset-0 w-full h-full z-20"></canvas>
+      </div>
+
+      <!-- Instructions & Upload -->
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-[11px] text-amber-900 space-y-1">
+        <p class="font-bold flex items-center gap-1"><i data-lucide="check-circle" class="w-3.5 h-3.5 text-amber-700"></i> Both Images Stored Securely:</p>
+        <p class="text-amber-800">1. Original high-res uploaded photo + 2. Print mockup canvas are saved for production download.</p>
+      </div>
+
+      <div class="space-y-3 pt-1">
+        <div>
+          <label class="text-xs font-bold text-slate-700 block mb-1">Choose Photo / Logo:</label>
+          <input type="file" id="photoUploadInput" accept="image/*" class="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#670D1F] file:text-white hover:file:bg-[#520817] cursor-pointer" onchange="handleUserPhotoUpload(event)">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 pt-2">
+          <button onclick="closeCustomizer()" class="w-full py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50">Cancel</button>
+          <button onclick="confirmCustomizationAndAddToCart()" class="w-full py-2.5 rounded-xl bg-[#670D1F] hover:bg-[#520817] text-white text-xs font-bold shadow-md">Add to Cart</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cart Drawer -->
+  <div id="cartDrawer" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 hidden justify-end flex">
+    <div class="bg-white w-full max-w-md h-full p-6 flex flex-col shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div class="flex items-center gap-2">
+          <i data-lucide="shopping-bag" class="w-5 h-5 text-[#670D1F]"></i>
+          <h3 class="font-serif text-lg font-bold text-slate-900">Your Shopping Cart</h3>
+        </div>
+        <button onclick="closeCart()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold flex items-center justify-center">✕</button>
+      </div>
+
+      <div id="cartItemsContainer" class="flex-1 overflow-y-auto space-y-3"></div>
+
+      <div class="border-t border-slate-100 pt-4 space-y-3">
+        <div class="flex items-center justify-between text-sm font-bold text-slate-900">
+          <span>Total Amount:</span>
+          <span id="cartTotalPrice" class="text-lg text-[#670D1F] font-extrabold">₹0</span>
+        </div>
+        <button onclick="checkoutOrder()" class="w-full py-3 rounded-xl bg-[#670D1F] hover:bg-[#520817] text-white font-bold text-xs uppercase tracking-wider shadow-md transition-all">
+          Proceed to Checkout
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="bg-slate-900 text-slate-400 py-12 px-6 border-t border-slate-800 text-center text-xs space-y-2 mt-16">
+    <p class="font-serif text-xl text-white font-bold tracking-tight">Cluster Studio</p>
+    <p>Premium Personalized & Sublimation Printing • 100% Satisfaction Guarantee</p>
+    <p class="text-slate-500 pt-4">© 2026 Cluster Studio. Powered by Cloudflare Global Edge.</p>
+  </footer>
+
+  <script>
+    const PRODUCTS = [
+  {
+    "id": "1-1",
+    "name": "White Ceramic Mug",
+    "category": "Mugs",
+    "price": 199,
+    "mrp": 229,
+    "discount": "13% OFF",
+    "rating": 4.9,
+    "reviewsCount": 180,
+    "image": "/showimg/1%20(1).jpeg",
+    "bannerImage": "/bannerimg/1%20(1).jpeg",
+    "description": "Classic ceramic white mug designed for vibrant sublimation custom printing. High glossy finish, microwave safe."
+  },
+  {
+    "id": "1-2",
+    "name": "Patch Mug",
+    "category": "Mugs",
+    "price": 299,
+    "mrp": 350,
+    "discount": "15% OFF",
+    "rating": 4.8,
+    "reviewsCount": 145,
+    "image": "/showimg/1%20(2).jpeg",
+    "bannerImage": "/bannerimg/1%20(2).jpeg",
+    "description": "Premium patch mug with an elegant textured print patch that makes your customized photo pop beautifully."
+  },
+  {
+    "id": "1-3",
+    "name": "Mini Mug (Espresso)",
+    "category": "Mugs",
+    "price": 149,
+    "mrp": 199,
+    "discount": "25% OFF",
+    "rating": 4.7,
+    "reviewsCount": 92,
+    "image": "/showimg/1%20(3).jpeg",
+    "bannerImage": "/bannerimg/1%20(3).jpeg",
+    "description": "Adorable mini ceramic mug, perfect for strong espresso shots, children's milk cups, or desk decorative keepsakes."
+  },
+  {
+    "id": "1-4",
+    "name": "Magic Mug (Heat Sensitive)",
+    "category": "Mugs",
+    "price": 349,
+    "mrp": 449,
+    "discount": "22% OFF",
+    "rating": 5,
+    "reviewsCount": 245,
+    "image": "/showimg/1%20(4).jpeg",
+    "bannerImage": "/bannerimg/1%20(4).jpeg",
+    "description": "Heat-sensitive thermo-reactive mug that magically reveals your custom hidden photo when hot coffee or tea is poured in."
+  },
+  {
+    "id": "1-5",
+    "name": "Stainless Steel Sipper Bottle (750ml)",
+    "category": "Bottles & Sippers",
+    "price": 499,
+    "mrp": 649,
+    "discount": "23% OFF",
+    "rating": 4.8,
+    "reviewsCount": 164,
+    "image": "/showimg/1%20(5).jpeg",
+    "bannerImage": "/bannerimg/1%20(5).jpeg",
+    "description": "Stainless steel sipper bottle with leak-proof flip cap and 360-degree custom graphic wrap."
+  },
+  {
+    "id": "1-6",
+    "name": "Camera Style Sports Bottle",
+    "category": "Bottles & Sippers",
+    "price": 499,
+    "mrp": 699,
+    "discount": "28% OFF",
+    "rating": 4.9,
+    "reviewsCount": 110,
+    "image": "/showimg/1%20(6).jpeg",
+    "bannerImage": "/bannerimg/1%20(6).jpeg",
+    "description": "Creative camera-inspired custom water bottle with sports nozzle for gym, travel, and college."
+  },
+  {
+    "id": "1-7",
+    "name": "Romantic Couple Mug",
+    "category": "Mugs",
+    "price": 299,
+    "mrp": 399,
+    "discount": "25% OFF",
+    "rating": 4.9,
+    "reviewsCount": 178,
+    "image": "/showimg/1%20(7).jpeg",
+    "bannerImage": "/bannerimg/1%20(7).jpeg",
+    "description": "Romantic custom couple mug crafted for celebrating love, anniversaries, and sweet daily moments together."
+  },
+  {
+    "id": "1-8",
+    "name": "Personalized Name Keychain",
+    "category": "Keychains",
+    "price": 149,
+    "mrp": 199,
+    "discount": "25% OFF",
+    "rating": 4.8,
+    "reviewsCount": 310,
+    "image": "/showimg/1%20(8).jpg",
+    "bannerImage": "/bannerimg/1%20(8).jpeg",
+    "description": "Personalized metallic name keychain with precision engraving/printing. Lightweight and durable."
+  },
+  {
+    "id": "1-9",
+    "name": "Wooden Memory Photo Frame",
+    "category": "Photo Frames",
+    "price": 349,
+    "mrp": 449,
+    "discount": "22% OFF",
+    "rating": 4.9,
+    "reviewsCount": 195,
+    "image": "/showimg/1%20(9).jpeg",
+    "bannerImage": "/bannerimg/1%20(9).jpeg",
+    "description": "Handcrafted wooden photo frame with high-resolution photo print and protective acrylic glass."
+  },
+  {
+    "id": "1-10",
+    "name": "Custom Square Photo Cushion",
+    "category": "Cushions & Pillows",
+    "price": 399,
+    "mrp": 549,
+    "discount": "27% OFF",
+    "rating": 4.8,
+    "reviewsCount": 130,
+    "image": "/showimg/1%20(10).jpeg",
+    "bannerImage": "/bannerimg/1%20(10).jpeg",
+    "description": "Super-soft velvet photo cushion with premium hypoallergenic filler. Machine washable cover."
+  },
+  {
+    "id": "1-11",
+    "name": "LED Glowing Photo Frame",
+    "category": "Photo Frames",
+    "price": 599,
+    "mrp": 799,
+    "discount": "25% OFF",
+    "rating": 5,
+    "reviewsCount": 220,
+    "image": "/showimg/1%20(11).jpeg",
+    "bannerImage": "/bannerimg/1%20(11).jpeg",
+    "description": "Illuminated acrylic LED photo frame with warm ambient backlight. USB powered with on/off switch."
+  },
+  {
+    "id": "1-12",
+    "name": "Mosaic Collage Photo Frame",
+    "category": "Photo Frames",
+    "price": 449,
+    "mrp": 599,
+    "discount": "25% OFF",
+    "rating": 4.7,
+    "reviewsCount": 88,
+    "image": "/showimg/1%20(12).jpeg",
+    "bannerImage": "/bannerimg/1%20(12).jpeg",
+    "description": "Beautiful collage frame combining up to 25 mini photos to form one large cherished portrait."
+  },
+  {
+    "id": "1-13",
+    "name": "Double-Wall Insulated Tumbler",
+    "category": "Bottles & Sippers",
+    "price": 549,
+    "mrp": 749,
+    "discount": "27% OFF",
+    "rating": 4.9,
+    "reviewsCount": 140,
+    "image": "/showimg/1%20(13).jpeg",
+    "bannerImage": "/bannerimg/1%20(13).jpeg",
+    "description": "Vacuum insulated hot & cold coffee tumbler with spill-proof sliding lid and laser customized artwork."
+  },
+  {
+    "id": "1-14",
+    "name": "360 Rotating Photo Lamp",
+    "category": "Photo Frames",
+    "price": 699,
+    "mrp": 999,
+    "discount": "30% OFF",
+    "rating": 5,
+    "reviewsCount": 175,
+    "image": "/showimg/1%20(14).jpeg",
+    "bannerImage": "/bannerimg/1%20(14).jpeg",
+    "description": "Motorized rotating cylindrical bedside lamp showcasing 4 custom photos with gentle LED glow."
+  },
+  {
+    "id": "1-15",
+    "name": "Spotify Acrylic Song Plaque",
+    "category": "Keychains",
+    "price": 299,
+    "mrp": 449,
+    "discount": "33% OFF",
+    "rating": 4.9,
+    "reviewsCount": 340,
+    "image": "/showimg/1%20(15).jpeg",
+    "bannerImage": "/bannerimg/1%20(15).jpeg",
+    "description": "Custom acrylic music plaque featuring your scannable Spotify song code, album art, and personalized photo."
+  },
+  {
+    "id": "1-16",
+    "name": "Custom Neon Glow Sign Frame",
+    "category": "Photo Frames",
+    "price": 799,
+    "mrp": 1199,
+    "discount": "33% OFF",
+    "rating": 4.8,
+    "reviewsCount": 95,
+    "image": "/showimg/1%20(16).jpeg",
+    "bannerImage": "/bannerimg/1%20(16).jpeg",
+    "description": "Vibrant neon-accented photo art piece that lights up any bedroom, gaming den, or living room."
+  },
+  {
+    "id": "1-17",
+    "name": "Magic Sequin Heart Cushion",
+    "category": "Cushions & Pillows",
+    "price": 449,
+    "mrp": 649,
+    "discount": "31% OFF",
+    "rating": 4.9,
+    "reviewsCount": 260,
+    "image": "/showimg/1%20(17).jpeg",
+    "bannerImage": "/bannerimg/1%20(17).jpeg",
+    "description": "Heart-shaped reversible sequin cushion. Swipe the sequins with your hand to reveal the hidden photo."
+  }
+];
+
+    let currentCategory = 'All';
+    let cart = JSON.parse(localStorage.getItem('cs_cart') || '[]');
+    let currentCustomizingProduct = null;
+    let userUploadedImg = null;
+
+    function renderProducts(list) {
+      const grid = document.getElementById('productsGrid');
+      document.getElementById('productCount').innerText = `Showing ${list.length} products`;
+      
+      if (list.length === 0) {
+        grid.innerHTML = `<div class="col-span-full py-16 text-center text-slate-500 font-bold text-sm">No products found matching your filter.</div>`;
+        return;
+      }
+
+      grid.innerHTML = list.map(p => `
+        <div class="bg-white rounded-2xl border border-slate-200/80 p-3 flex flex-col justify-between hover:shadow-lg transition-all group">
+          <div class="relative w-full aspect-square bg-slate-50 rounded-xl overflow-hidden mb-3 border border-slate-100 flex items-center justify-center">
+            <img src="${p.image}" alt="${p.name}" class="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300">
+            <span class="absolute top-2 left-2 bg-[#670D1F] text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full shadow-xs">₹${p.price}</span>
+            <span class="absolute top-2 right-2 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-extrabold px-1.5 py-0.5 rounded-md">${p.discount}</span>
+          </div>
+
+          <div class="space-y-1.5 flex-1 flex flex-col justify-between">
+            <div>
+              <span class="text-[10px] uppercase tracking-wider font-extrabold text-slate-400">${p.category}</span>
+              <h3 class="font-bold text-slate-900 text-xs sm:text-sm line-clamp-2 leading-tight">${p.name}</h3>
+            </div>
+
+            <div class="pt-2 flex items-center justify-between border-t border-slate-100">
+              <div>
+                <span class="font-extrabold text-sm sm:text-base text-[#670D1F]">₹${p.price}</span>
+                <span class="text-[11px] text-slate-400 line-through ml-1">₹${p.mrp}</span>
+              </div>
+              <button onclick="startPersonalize('${p.id}')" class="bg-[#670D1F] hover:bg-[#520817] text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow-xs transition-colors flex items-center gap-1">
+                <span>Personalize</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function filterProducts() {
+      const search = document.getElementById('searchInput')?.value.toLowerCase() || '';
+      const maxPrice = document.getElementById('priceFilter')?.value || 'all';
+
+      let filtered = PRODUCTS.filter(p => {
+        const matchesCat = currentCategory === 'All' || p.category === currentCategory;
+        const matchesSearch = p.name.toLowerCase().includes(search) || p.category.toLowerCase().includes(search);
+        const matchesPrice = maxPrice === 'all' || p.price <= parseInt(maxPrice);
+        return matchesCat && matchesSearch && matchesPrice;
+      });
+
+      renderProducts(filtered);
+    }
+
+    function selectCategory(cat) {
+      currentCategory = cat;
+      document.querySelectorAll('.cat-pill').forEach(btn => {
+        if (btn.innerText.includes(cat) || (cat === 'All' && btn.innerText.includes('All'))) {
+          btn.className = 'cat-pill active-cat px-4 py-1.5 rounded-full text-xs font-bold bg-[#670D1F] text-white shadow-xs';
+        } else {
+          btn.className = 'cat-pill px-4 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200';
+        }
+      });
+      document.getElementById('sectionTitle').innerText = cat === 'All' ? 'All Customizable Gifts' : cat;
+      filterProducts();
+    }
+
+    function startPersonalize(productId) {
+      currentCustomizingProduct = PRODUCTS.find(p => p.id === productId);
+      if (!currentCustomizingProduct) return;
+      document.getElementById('modalProductName').innerText = `Personalize: ${currentCustomizingProduct.name}`;
+      document.getElementById('modalBaseProductImg').src = currentCustomizingProduct.image;
+      document.getElementById('customizerModal').classList.remove('hidden');
+      drawCanvas();
+    }
+
+    function closeCustomizer() {
+      document.getElementById('customizerModal').classList.add('hidden');
+      userUploadedImg = null;
+    }
+
+    function handleUserPhotoUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const img = new window.Image();
+        img.onload = function() {
+          userUploadedImg = img;
+          drawCanvas();
+        };
+        img.src = evt.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function drawCanvas() {
+      const canvas = document.getElementById('customCanvas');
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (userUploadedImg) {
+        // Draw user photo onto center of canvas
+        ctx.save();
+        ctx.drawImage(userUploadedImg, 80, 80, 240, 240);
+        ctx.restore();
+      }
+    }
+
+    function confirmCustomizationAndAddToCart() {
+      const canvas = document.getElementById('customCanvas');
+      const finalMockup = canvas.toDataURL('image/png');
+      const rawUpload = userUploadedImg ? userUploadedImg.src : '';
+
+      cart.push({
+        product: currentCustomizingProduct,
+        quantity: 1,
+        customImageUrl: rawUpload,
+        finalImageUrl: finalMockup
+      });
+
+      localStorage.setItem('cs_cart', JSON.stringify(cart));
+      updateCartBadge();
+      closeCustomizer();
+      openCart();
+    }
+
+    function updateCartBadge() {
+      const totalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+      document.getElementById('cartCountBadge').innerText = totalCount;
+    }
+
+    function openCart() {
+      const container = document.getElementById('cartItemsContainer');
+      let total = 0;
+
+      if (cart.length === 0) {
+        container.innerHTML = `<div class="py-12 text-center text-slate-400 text-xs font-bold">Your cart is empty.</div>`;
+      } else {
+        container.innerHTML = cart.map((item, idx) => {
+          total += item.product.price * item.quantity;
+          return `
+            <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200/70">
+              <img src="${item.product.image}" class="w-12 h-12 rounded-lg object-contain bg-white border border-slate-200">
+              <div class="flex-1 min-w-0">
+                <h4 class="text-xs font-bold text-slate-900 truncate">${item.product.name}</h4>
+                <span class="text-[11px] font-extrabold text-[#670D1F]">₹${item.product.price}</span>
+              </div>
+              <button onclick="removeFromCart(${idx})" class="text-slate-400 hover:text-rose-600 text-xs font-bold">✕</button>
+            </div>
+          `;
+        }).join('');
+      }
+
+      document.getElementById('cartTotalPrice').innerText = `₹${total}`;
+      document.getElementById('cartDrawer').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeCart() {
+      document.getElementById('cartDrawer').classList.add('hidden');
+    }
+
+    function removeFromCart(idx) {
+      cart.splice(idx, 1);
+      localStorage.setItem('cs_cart', JSON.stringify(cart));
+      updateCartBadge();
+      openCart();
+    }
+
+    function checkoutOrder() {
+      if (cart.length === 0) return alert("Your cart is empty!");
+      alert("Order placed successfully! In the admin dashboard both the original uploaded photo and final sublimation print design are saved for download.");
+      cart = [];
+      localStorage.setItem('cs_cart', JSON.stringify(cart));
+      updateCartBadge();
+      closeCart();
+    }
+
+    // Init
+    renderProducts(PRODUCTS);
+    updateCartBadge();
+    lucide.createIcons();
+  </script>
+</body>
+</html>
