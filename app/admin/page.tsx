@@ -79,7 +79,18 @@ export default function AdminDashboard() {
         headers: { "x-admin-key": sessionStorage.getItem("adminKey") || "" },
       });
       const data = await res.json();
-      const ords: AdminOrder[] = data.orders || [];
+      let ords: AdminOrder[] = data.orders || [];
+
+      // Merge with client localStorage orders so newly placed orders in browser are never lost
+      try {
+        const localSaved: AdminOrder[] = JSON.parse(localStorage.getItem("cluster_studio_orders") || "[]");
+        for (const localOrd of localSaved) {
+          if (!ords.some(o => o.orderId === localOrd.orderId)) {
+            ords.unshift(localOrd);
+          }
+        }
+      } catch (e) {}
+
       setOrders(ords);
 
       // Exclude cancelled orders from real Revenue calculation

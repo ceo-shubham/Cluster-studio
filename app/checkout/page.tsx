@@ -88,6 +88,34 @@ export default function CheckoutPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Order failed");
+
+      // Save order in localStorage so it's instantly visible in Admin Dashboard
+      try {
+        const orderPayload = {
+          orderId: data.orderId,
+          userName: form.name,
+          userEmail: form.email,
+          totalAmount: totalPrice(),
+          status: "pending",
+          paymentStatus: "paid",
+          createdAt: new Date().toISOString(),
+          shippingAddress: { ...form },
+          items: items.map((i) => ({
+            productId: i.product.id,
+            productName: i.product.name,
+            productImage: i.product.image,
+            quantity: i.quantity,
+            price: i.product.price,
+            customImageUrl: i.customImageUrl || "",
+            finalImageUrl: i.finalImageUrl || "",
+          }))
+        };
+        const stored = JSON.parse(localStorage.getItem("cluster_studio_orders") || "[]");
+        stored.unshift(orderPayload);
+        localStorage.setItem("cluster_studio_orders", JSON.stringify(stored));
+        sessionStorage.setItem(`currentAdminOrder_${data.orderId}`, JSON.stringify(orderPayload));
+      } catch (e) {}
+
       clearCart();
       toast.success("🎉 Order placed successfully!");
       router.push(`/orders/${data.orderId}`);
