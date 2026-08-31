@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { s3, BUCKET } from "@/lib/backblaze";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
+import connectDB from "@/lib/mongodb";
+import Order from "@/models/Order";
 
 export const runtime = "nodejs";
 
 function verifyAdmin(req: NextRequest): boolean {
-  const token = req.headers.get("x-admin-key");
+  const token = req.headers.get("x-admin-key") || req.nextUrl.searchParams.get("token");
   return token === (process.env.ADMIN_TOKEN || "cs-admin-token-2024");
 }
 
@@ -14,8 +16,7 @@ function extractB2Key(url: string): string | null {
   try {
     const parsed = new URL(url);
     const bucketName = process.env.B2_BUCKET_NAME || "";
-    // Check if this URL belongs to our B2 bucket
-    if (parsed.hostname.startsWith(bucketName)) {
+    if (bucketName && parsed.hostname.startsWith(bucketName)) {
       return parsed.pathname.replace(/^\//, "");
     }
     return null;
@@ -29,13 +30,43 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const url = req.nextUrl.searchParams.get("url");
-  const filename = req.nextUrl.searchParams.get("filename") || "cluster-studio-design.png";
-
-  if (!url) return NextResponse.json({ error: "URL required" }, { status: 400 });
+  const orderId = req.nextUrl.searchParams.get("orderId");
+  const itemIndex = parseInt(req.nextUrl.searchParams.get("itemIndex") || "0", 10);
+  const type = req.nextUrl.searchParams.get("type"); // "original" or "final"
+  let url = req.nextUrl.searchParams.get("url") || "";
+  let filename = req.nextUrl.searchParams.get("filename") || "";
 
   try {
-    // Case 1: base64 dataURL (old orders where final design wasn't uploaded to B2)
+    // If orderId is provided, look up the image directly from the database
+    if (orderId && type) {
+      await connectDB();
+      const order = await Order.findOne({ orderId }).lean();
+      if (!order) {
+        return NextResponse.json({ error: "Order not found" }, { status: 404 });
+      }
+      const item = order.items?.[itemIndex] || order.items?.[0];
+      if (!item) {
+        return NextResponse.json({ error: "Order item not found" }, { status: 404 });
+      }
+
+      if (type === "original") {
+        url = item.customImageUrl || "";
+        if (!filename) filename = `${orderId}-original-photo.jpg`;
+      } else {
+        url = item.finalImageUrl || "";
+        if (!filename) filename = `${orderId}-final-design.png`;
+      }
+    }
+
+    if (!url) {
+      return NextResponse.json({ error: "No image found for this item" }, { status: 404 });
+    }
+
+    if (!filename) {
+      filename = "cluster-studio-asset.png";
+    }
+
+    // Case 1: base64 dataURL (Stored directly in MongoDB or fallback)
     if (url.startsWith("data:")) {
       const matches = url.match(/^data:(.+);base64,(.+)$/);
       if (!matches) throw new Error("Invalid base64 data");
@@ -45,28 +76,34 @@ export async function GET(req: NextRequest) {
         headers: {
           "Content-Type": contentType,
           "Content-Disposition": `attachment; filename="${filename}"`,
+          "Cache-Control": "no-cache",
         },
       });
     }
 
-    // Case 2: B2 URL — fetch via S3 SDK (works for private buckets)
+    // Case 2: B2 URL — fetch via S3 SDK
     const b2Key = extractB2Key(url);
     if (b2Key) {
-      const command = new GetObjectCommand({ Bucket: BUCKET, Key: b2Key });
-      const s3Res = await s3.send(command);
-      const chunks: Uint8Array[] = [];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      for await (const chunk of s3Res.Body as any) chunks.push(chunk);
-      const buffer = Buffer.concat(chunks);
-      return new NextResponse(buffer, {
-        headers: {
-          "Content-Type": s3Res.ContentType || "image/jpeg",
-          "Content-Disposition": `attachment; filename="${filename}"`,
-        },
-      });
+      try {
+        const command = new GetObjectCommand({ Bucket: BUCKET, Key: b2Key });
+        const s3Res = await s3.send(command);
+        const chunks: Uint8Array[] = [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        for await (const chunk of s3Res.Body as any) chunks.push(chunk);
+        const buffer = Buffer.concat(chunks);
+        return new NextResponse(buffer, {
+          headers: {
+            "Content-Type": s3Res.ContentType || "image/jpeg",
+            "Content-Disposition": `attachment; filename="${filename}"`,
+            "Cache-Control": "no-cache",
+          },
+        });
+      } catch (s3Err) {
+        console.warn("S3 GetObject failed, falling back to direct fetch:", (s3Err as Error).message);
+      }
     }
 
-    // Case 3: fallback direct fetch (public URLs)
+    // Case 3: Public web URL
     const imageRes = await fetch(url);
     if (!imageRes.ok) throw new Error(`HTTP ${imageRes.status}`);
     const buffer = await imageRes.arrayBuffer();
@@ -74,6 +111,7 @@ export async function GET(req: NextRequest) {
       headers: {
         "Content-Type": imageRes.headers.get("content-type") || "image/jpeg",
         "Content-Disposition": `attachment; filename="${filename}"`,
+        "Cache-Control": "no-cache",
       },
     });
 
@@ -82,3 +120,4 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Download failed" }, { status: 500 });
   }
 }
+

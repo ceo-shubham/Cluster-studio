@@ -6,105 +6,120 @@ import { RotateCcw, ZoomIn, ZoomOut, Move, Check, Upload } from "lucide-react";
 interface Props {
   product: Product;
   onComplete: (dataUrl: string, uploadedImageUrl: string) => void;
+  onCancel?: () => void;
 }
 
 interface ImgState {
-  x: number;   // center x on canvas
-  y: number;   // center y on canvas
+  x: number;
+  y: number;
   scale: number;
   rotation: number;
 }
 
-const CW = 500; // canvas width
-const CH = 500; // canvas height
-
-export default function ImageEditor({ product, onComplete }: Props) {
-  const canvasRef  = useRef<HTMLCanvasElement>(null);
-  const fileRef    = useRef<HTMLInputElement>(null);
+export default function ImageEditor({ product, onComplete, onCancel }: Props) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const [productImg, setProductImg] = useState<HTMLImageElement | null>(null);
-  const [userImg,    setUserImg]    = useState<HTMLImageElement | null>(null);
-  const [state, setState] = useState<ImgState>({ x: CW / 2, y: CH / 2, scale: 1, rotation: 0 });
+  const [userImg, setUserImg] = useState<HTMLImageElement | null>(null);
+  const [canvasDim, setCanvasDim] = useState<{ width: number; height: number }>({ width: 600, height: 600 });
+  const [state, setState] = useState<ImgState>({ x: 300, y: 300, scale: 1, rotation: 0 });
   const [dragging, setDragging] = useState(false);
-  const [dragOff,  setDragOff]  = useState({ x: 0, y: 0 });
+  const [dragOff, setDragOff] = useState({ x: 0, y: 0 });
   const [uploading, setUploading] = useState(false);
   const [uploadedUrl, setUploadedUrl] = useState("");
+  const [rawUserImgData, setRawUserImgData] = useState("");
 
-  /* ── load product background (showimg) ── */
+  /* ── Load product background with natural aspect ratio ── */
   useEffect(() => {
     const img = new window.Image();
     img.crossOrigin = "anonymous";
     img.src = product.image;
-    img.onload  = () => setProductImg(img);
+    img.onload = () => {
+      const nw = img.naturalWidth || 600;
+      const nh = img.naturalHeight || 600;
+      const targetW = 600;
+      const targetH = Math.round((600 * nh) / nw);
+      
+      setCanvasDim({ width: targetW, height: targetH });
+      setState({ x: targetW / 2, y: targetH / 2, scale: 1, rotation: 0 });
+      setProductImg(img);
+    };
     img.onerror = () => setProductImg(null);
   }, [product.image]);
 
-  /* ── draw ── */
+  /* ── Draw on Canvas ── */
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d")!;
+    const { width: CW, height: CH } = canvasDim;
+
     ctx.clearRect(0, 0, CW, CH);
 
-    // 1. Product background
+    // 1. Draw Product Image (Exact natural aspect ratio, no squashing)
     if (productImg) {
       ctx.drawImage(productImg, 0, 0, CW, CH);
     } else {
-      ctx.fillStyle = "#f5ede0";
+      ctx.fillStyle = "#FAF7F2";
       ctx.fillRect(0, 0, CW, CH);
     }
 
-    // 2. User image — NO clip, place freely anywhere on canvas
+    // 2. Draw User Custom Image
     if (userImg) {
       ctx.save();
       ctx.translate(state.x, state.y);
       ctx.rotate((state.rotation * Math.PI) / 180);
       ctx.scale(state.scale, state.scale);
 
-      // Default size: fit to ~40% of canvas
-      const maxDim = CW * 0.4;
-      const iw = userImg.naturalWidth;
-      const ih = userImg.naturalHeight;
-      const base = Math.min(maxDim / iw, maxDim / ih);
+      // Natural proportional sizing (fit ~45% of canvas width)
+      const targetDim = CW * 0.45;
+      const iw = userImg.naturalWidth || 200;
+      const ih = userImg.naturalHeight || 200;
+      const base = Math.min(targetDim / iw, targetDim / ih);
       const dw = iw * base;
       const dh = ih * base;
 
       ctx.drawImage(userImg, -dw / 2, -dh / 2, dw, dh);
       ctx.restore();
     } else {
-      // Guide overlay when no image uploaded yet
+      // Guide overlay when no image is uploaded
       ctx.save();
-      ctx.strokeStyle = "rgba(245,158,11,0.7)";
+      ctx.strokeStyle = "rgba(103,13,31,0.5)";
       ctx.lineWidth = 2;
-      ctx.setLineDash([6, 4]);
-      const pad = 40;
-      ctx.strokeRect(pad, pad, CW - pad * 2, CH - pad * 2);
+      ctx.setLineDash([8, 6]);
+      const padX = CW * 0.15;
+      const padY = CH * 0.18;
+      ctx.strokeRect(padX, padY, CW - padX * 2, CH - padY * 2);
       ctx.setLineDash([]);
-      ctx.fillStyle = "rgba(245,158,11,0.08)";
-      ctx.fillRect(pad, pad, CW - pad * 2, CH - pad * 2);
-      ctx.fillStyle = "#b45309";
+      ctx.fillStyle = "rgba(103,13,31,0.04)";
+      ctx.fillRect(padX, padY, CW - padX * 2, CH - padY * 2);
+      
+      ctx.fillStyle = "#670D1F";
       ctx.font = "bold 16px sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText("Upload your image", CW / 2, CH / 2 - 12);
+      ctx.fillText("Upload your design or photo", CW / 2, CH / 2 - 12);
+      
       ctx.font = "13px sans-serif";
-      ctx.fillStyle = "#92400e";
-      ctx.fillText("Then drag & resize freely", CW / 2, CH / 2 + 14);
+      ctx.fillStyle = "#4B5563";
+      ctx.fillText("Position, zoom & rotate freely", CW / 2, CH / 2 + 14);
       ctx.restore();
     }
-  }, [productImg, userImg, state]);
+  }, [productImg, userImg, state, canvasDim]);
 
   useEffect(() => { draw(); }, [draw]);
 
-  /* ── file upload ── */
+  /* ── File Upload ── */
   const handleFile = async (file: File) => {
     const reader = new FileReader();
     reader.onload = (e) => {
+      const dataUri = e.target?.result as string;
+      setRawUserImgData(dataUri);
       const img = new window.Image();
-      img.src = e.target?.result as string;
+      img.src = dataUri;
       img.onload = () => {
         setUserImg(img);
-        // Place at center of canvas by default
-        setState({ x: CW / 2, y: CH / 2, scale: 1, rotation: 0 });
+        setState({ x: canvasDim.width / 2, y: canvasDim.height / 2, scale: 1, rotation: 0 });
       };
     };
     reader.readAsDataURL(file);
@@ -113,22 +128,22 @@ export default function ImageEditor({ product, onComplete }: Props) {
     try {
       const fd = new FormData();
       fd.append("file", file);
-      const res  = await fetch("/api/upload", { method: "POST", body: fd });
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
       const data = await res.json();
       if (data.url) setUploadedUrl(data.url);
-    } catch { /* silent */ }
+    } catch { /* fallback to rawUserImgData */ }
     finally { setUploading(false); }
   };
 
-  /* ── helpers to convert mouse/touch pos to canvas coords ── */
+  /* ── Helpers to convert pointer pos to canvas coords ── */
   const toCanvas = (clientX: number, clientY: number) => {
     const rect = canvasRef.current!.getBoundingClientRect();
-    const sx = CW / rect.width;
-    const sy = CH / rect.height;
+    const sx = canvasDim.width / rect.width;
+    const sy = canvasDim.height / rect.height;
     return { x: (clientX - rect.left) * sx, y: (clientY - rect.top) * sy };
   };
 
-  /* ── mouse ── */
+  /* ── Mouse Drag ── */
   const onMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!userImg) return;
     const p = toCanvas(e.clientX, e.clientY);
@@ -142,107 +157,140 @@ export default function ImageEditor({ product, onComplete }: Props) {
   };
   const onMouseUp = () => {
     setDragging(false);
-    draggingRef.current = false;
   };
 
-  /* ── touch ── */
-  const draggingRef = useRef(false);
-  const dragOffRef  = useRef({ x: 0, y: 0 });
-
+  /* ── Touch Drag ── */
   const onTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
     if (!userImg) return;
     const t = e.touches[0];
     const p = toCanvas(t.clientX, t.clientY);
-    draggingRef.current = true;
-    dragOffRef.current  = { x: p.x - state.x, y: p.y - state.y };
     setDragging(true);
     setDragOff({ x: p.x - state.x, y: p.y - state.y });
   };
 
-  // Native touchmove with passive:false so preventDefault() actually works
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (!draggingRef.current) return;
-      e.preventDefault(); // stops page scroll while dragging on canvas
+      if (!dragging) return;
+      e.preventDefault();
       const t = e.touches[0];
       const p = toCanvas(t.clientX, t.clientY);
-      setState(s => ({ ...s, x: p.x - dragOffRef.current.x, y: p.y - dragOffRef.current.y }));
+      setState(s => ({ ...s, x: p.x - dragOff.x, y: p.y - dragOff.y }));
     };
 
     canvas.addEventListener("touchmove", handleTouchMove, { passive: false });
     return () => canvas.removeEventListener("touchmove", handleTouchMove);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [dragging, dragOff, canvasDim]);
 
   const handleConfirm = () => {
     const dataUrl = canvasRef.current?.toDataURL("image/png") || "";
-    onComplete(dataUrl, uploadedUrl);
+    const originalPhoto = uploadedUrl || rawUserImgData;
+    onComplete(dataUrl, originalPhoto);
   };
 
   return (
     <div className="flex flex-col items-center gap-4 w-full">
 
-      {/* Canvas */}
-      <div className="w-full max-w-[500px] mx-auto rounded-xl overflow-hidden shadow-lg border-2 border-amber-200"
-        style={{ aspectRatio: "1/1" }}>
+      {/* Canvas Viewport */}
+      <div 
+        className="w-full max-w-[460px] mx-auto rounded-2xl overflow-hidden shadow-md border-2 border-amber-100 bg-[#FAF7F2] flex items-center justify-center"
+        style={{ aspectRatio: `${canvasDim.width} / ${canvasDim.height}` }}
+      >
         <canvas
           ref={canvasRef}
-          width={CW} height={CH}
-          className={`block w-full h-full ${userImg ? "cursor-grab active:cursor-grabbing" : "cursor-default"}`}
-          onMouseDown={onMouseDown} onMouseMove={onMouseMove}
-          onMouseUp={onMouseUp}    onMouseLeave={onMouseUp}
-          onTouchStart={onTouchStart} onTouchEnd={onMouseUp}
+          width={canvasDim.width}
+          height={canvasDim.height}
+          className={`block w-full h-full object-contain ${
+            userImg ? "cursor-grab active:cursor-grabbing" : "cursor-default"
+          }`}
+          onMouseDown={onMouseDown}
+          onMouseMove={onMouseMove}
+          onMouseUp={onMouseUp}
+          onMouseLeave={onMouseUp}
+          onTouchStart={onTouchStart}
+          onTouchEnd={onMouseUp}
         />
       </div>
 
-      {/* File input */}
-      <input ref={fileRef} type="file" accept="image/*" className="hidden"
-        onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
+      {/* Hidden File input */}
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])}
+      />
 
-      {/* Controls */}
+      {/* Action Controls */}
       {!userImg ? (
-        <button onClick={() => fileRef.current?.click()}
-          className="flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 rounded-xl font-semibold shadow w-full max-w-[500px] justify-center">
-          <Upload size={18} />
-          {uploading ? "Uploading..." : "Upload Your Image"}
-        </button>
+        <div className="w-full max-w-[460px] flex gap-2.5">
+          {onCancel && (
+            <button
+              onClick={onCancel}
+              className="px-4 py-3 rounded-xl border border-gray-300 text-gray-700 font-semibold text-xs hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+          )}
+          <button
+            onClick={() => fileRef.current?.click()}
+            className="flex-1 flex items-center justify-center gap-2 bg-[#670D1F] hover:bg-[#520817] text-white px-6 py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider shadow-md transition-all"
+          >
+            <Upload size={16} />
+            {uploading ? "Uploading Image..." : "Upload Your Image"}
+          </button>
+        </div>
       ) : (
-        <div className="w-full max-w-[500px] flex flex-col gap-3">
-          <div className="flex items-center justify-center gap-2 flex-wrap">
-            <button onClick={() => setState(s => ({ ...s, scale: Math.min(s.scale + 0.1, 5) }))}
-              className="flex items-center gap-1 bg-white border border-amber-200 hover:bg-amber-50 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors">
-              <ZoomIn size={15} /> Zoom +
+        <div className="w-full max-w-[460px] flex flex-col gap-3">
+          
+          {/* Zoom & Rotation Controls */}
+          <div className="flex items-center justify-center gap-2 flex-wrap bg-rose-50/70 p-2.5 rounded-xl border border-rose-100">
+            <button
+              onClick={() => setState(s => ({ ...s, scale: Math.min(s.scale + 0.15, 4) }))}
+              className="flex items-center gap-1 bg-white text-gray-800 border border-gray-200 hover:bg-rose-50 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-xs"
+            >
+              <ZoomIn size={14} className="text-[#670D1F]" /> Zoom +
             </button>
-            <button onClick={() => setState(s => ({ ...s, scale: Math.max(s.scale - 0.1, 0.1) }))}
-              className="flex items-center gap-1 bg-white border border-amber-200 hover:bg-amber-50 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors">
-              <ZoomOut size={15} /> Zoom −
+            <button
+              onClick={() => setState(s => ({ ...s, scale: Math.max(s.scale - 0.15, 0.2) }))}
+              className="flex items-center gap-1 bg-white text-gray-800 border border-gray-200 hover:bg-rose-50 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-xs"
+            >
+              <ZoomOut size={14} className="text-[#670D1F]" /> Zoom −
             </button>
-            <button onClick={() => setState(s => ({ ...s, rotation: s.rotation + 90 }))}
-              className="flex items-center gap-1 bg-white border border-amber-200 hover:bg-amber-50 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors">
-              <RotateCcw size={15} /> Rotate
+            <button
+              onClick={() => setState(s => ({ ...s, rotation: (s.rotation + 90) % 360 }))}
+              className="flex items-center gap-1 bg-white text-gray-800 border border-gray-200 hover:bg-rose-50 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-xs"
+            >
+              <RotateCcw size={14} className="text-[#670D1F]" /> Rotate
             </button>
-            <button onClick={() => setState({ x: CW / 2, y: CH / 2, scale: 1, rotation: 0 })}
-              className="bg-white border border-gray-200 hover:bg-gray-50 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors">
+            <button
+              onClick={() => setState({ x: canvasDim.width / 2, y: canvasDim.height / 2, scale: 1, rotation: 0 })}
+              className="bg-white text-gray-700 border border-gray-200 hover:bg-gray-100 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+            >
               Reset
             </button>
           </div>
 
-          <p className="text-xs text-gray-400 text-center flex items-center justify-center gap-1">
-            <Move size={11} /> Drag image freely anywhere on the product
+          <p className="text-[11px] text-gray-500 text-center flex items-center justify-center gap-1 font-medium">
+            <Move size={12} className="text-[#670D1F]" /> Drag &amp; move image freely on the product
           </p>
 
-          <div className="flex gap-2">
-            <button onClick={() => fileRef.current?.click()}
-              className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2.5 rounded-xl font-medium text-sm transition-colors">
-              Change Image
+          <div className="flex gap-2.5 pt-1">
+            <button
+              onClick={() => fileRef.current?.click()}
+              className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-colors text-center"
+            >
+              Change Photo
             </button>
-            <button onClick={handleConfirm} disabled={uploading}
-              className="flex-1 flex items-center justify-center gap-1.5 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white px-4 py-2.5 rounded-xl font-semibold transition-colors text-sm">
-              <Check size={15} />
-              {uploading ? "Uploading..." : "Confirm Design"}
+            <button
+              onClick={handleConfirm}
+              disabled={uploading}
+              className="flex-1 flex items-center justify-center gap-1.5 bg-[#670D1F] hover:bg-[#520817] disabled:opacity-60 text-white px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md"
+            >
+              <Check size={16} />
+              {uploading ? "Saving..." : "Apply Design"}
             </button>
           </div>
         </div>

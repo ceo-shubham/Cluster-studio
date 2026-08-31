@@ -1,8 +1,10 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
 import toast from "react-hot-toast";
-import { Lock, Eye, EyeOff } from "lucide-react";
+import { Lock, Eye, EyeOff, ShieldCheck, ArrowLeft } from "lucide-react";
 
 export default function AdminLogin() {
   const router = useRouter();
@@ -34,62 +36,99 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="flex items-center justify-center px-4" style={{ minHeight: "calc(100vh - 64px)" }}>
-      <div className="w-full max-w-sm">
-        {/* Logo */}
-        <div className="text-center mb-4">
-          <div className="w-12 h-12 rounded-full bg-amber-800 border-2 border-amber-400 flex items-center justify-center mx-auto mb-2">
-            <Lock size={20} className="text-amber-400" />
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-[#350710] to-slate-950 flex flex-col items-center justify-center p-4">
+      
+      {/* Return to Store Link */}
+      <div className="w-full max-w-md mb-4 flex justify-between items-center">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-200 hover:text-white transition-colors"
+        >
+          <ArrowLeft size={14} />
+          <span>Back to Store</span>
+        </Link>
+      </div>
+
+      <div className="w-full max-w-md">
+        
+        {/* Main Glass Card */}
+        <div className="bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-8 shadow-2xl border border-white/20">
+          
+          {/* Logo & Header */}
+          <div className="text-center mb-6">
+            <div className="relative w-14 h-14 rounded-2xl bg-[#670D1F] text-white flex items-center justify-center mx-auto mb-3 shadow-lg border border-amber-300/40">
+              <ShieldCheck size={28} className="text-amber-300" />
+            </div>
+            <h1 className="text-2xl font-serif font-bold text-slate-900">
+              Admin Portal
+            </h1>
+            <p className="text-xs text-slate-500 mt-1">
+              Cluster Studio Order & Fulfillment Management
+            </p>
           </div>
-          <h1 className="text-xl font-bold text-white">
-            Cluster <span className="text-amber-400">Studio</span>
-          </h1>
-          <p className="text-gray-400 text-xs mt-0.5">Admin Panel</p>
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            
+            {/* Email Field */}
+            <div>
+              <label className="text-xs font-bold text-slate-700 block mb-1.5 uppercase tracking-wider">
+                Admin Email
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full bg-slate-50 text-slate-900 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#670D1F] focus:bg-white transition-all"
+                placeholder="admin@clusterstudio.in"
+              />
+            </div>
+
+            {/* Password Field */}
+            <div>
+              <label className="text-xs font-bold text-slate-700 block mb-1.5 uppercase tracking-wider">
+                Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showPw ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full bg-slate-50 text-slate-900 border border-slate-200 rounded-xl px-3.5 py-2.5 pr-10 text-sm focus:outline-none focus:border-[#670D1F] focus:bg-white transition-all"
+                  placeholder="••••••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPw(!showPw)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors p-1"
+                  aria-label="Toggle password visibility"
+                >
+                  {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-[#670D1F] hover:bg-[#520817] disabled:opacity-60 text-white font-bold py-3 rounded-xl transition-all text-sm uppercase tracking-wider shadow-md hover:shadow-lg mt-2"
+            >
+              {loading ? "Verifying Credentials..." : "Sign In to Admin Panel"}
+            </button>
+
+          </form>
+
         </div>
 
-        <form onSubmit={handleLogin} className="bg-[#2a1208] rounded-2xl p-6 shadow-2xl border border-amber-900">
-          <h2 className="text-white font-bold text-base mb-4">Sign In</h2>
+        {/* Footer Note */}
+        <p className="text-center text-[11px] text-rose-200/60 mt-4">
+          Authorized personnel only • Cluster Studio Security
+        </p>
 
-          <div className="mb-3">
-            <label className="text-xs text-gray-300 block mb-1">Email Address</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full bg-[#1a0a03] border border-amber-900 text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
-              placeholder="admin@clusterstudio.in"
-            />
-          </div>
-
-          <div className="mb-4 relative">
-            <label className="text-xs text-gray-300 block mb-1">Password</label>
-            <input
-              type={showPw ? "text" : "password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full bg-[#1a0a03] border border-amber-900 text-white rounded-xl px-3 py-2 pr-10 text-sm focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
-              placeholder="••••••••••••"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPw(!showPw)}
-              className="absolute right-3 top-7 text-gray-500 hover:text-gray-300 transition-colors"
-            >
-              {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
-            </button>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-amber-600 hover:bg-amber-500 disabled:bg-amber-900 text-white font-bold py-2.5 rounded-xl transition-colors text-sm"
-          >
-            {loading ? "Signing in..." : "Sign In"}
-          </button>
-        </form>
       </div>
     </div>
   );
 }
+

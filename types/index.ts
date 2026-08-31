@@ -3,10 +3,21 @@ export interface Product {
   name: string;
   category: string;
   price: number;
+  mrp?: number;
+  discount?: string;
+  rating?: number;
+  reviewsCount?: number;
+  isBestSeller?: boolean;
+  isNewArrival?: boolean;
   cardImage: string;   // homepage grid card — from /bannerimg/
   image: string;       // product detail page + canvas editor — from /showimg/
+  gallery?: string[];  // additional images for product page gallery
+  colors?: string[];   // e.g. ["#111111", "#FFFFFF"]
+  giftTags?: string[]; // e.g. ["birthday", "anniversary", "couple", "under299"]
   description: string;
   specs?: string;
+  specificationsList?: string[];
+  features?: string[];
   printAreaWidth: number;
   printAreaHeight: number;
   printAreaX: number;

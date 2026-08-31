@@ -26,13 +26,18 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// Upload a base64 dataURL to B2 and return the stored URL
-async function uploadBase64ToB2(dataUrl: string, key: string): Promise<string> {
-  const matches = dataUrl.match(/^data:(.+);base64,(.+)$/);
-  if (!matches) throw new Error("Invalid base64 dataURL");
-  const contentType = matches[1];
-  const buffer = Buffer.from(matches[2], "base64");
-  return uploadToBackblaze(buffer, key, contentType);
+// Helper to upload a base64 dataURL to B2, or return null if failed
+async function uploadBase64ToB2(dataUrl: string, key: string): Promise<string | null> {
+  try {
+    const matches = dataUrl.match(/^data:(.+);base64,(.+)$/);
+    if (!matches) return null;
+    const contentType = matches[1];
+    const buffer = Buffer.from(matches[2], "base64");
+    return await uploadToBackblaze(buffer, key, contentType);
+  } catch (err) {
+    console.warn(`B2 upload failed for ${key}, preserving in database:`, (err as Error).message);
+    return null;
+  }
 }
 
 // POST /api/orders
@@ -48,24 +53,39 @@ export async function POST(req: NextRequest) {
 
     const orderId = generateOrderId();
 
-    // Upload any base64 finalImageUrls to B2 so admin can download them
+    // Process both custom photo and final canvas design for all items
     const processedItems = await Promise.all(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       items.map(async (item: any, idx: number) => {
+        let customImageUrl = item.customImageUrl || "";
         let finalImageUrl = item.finalImageUrl || "";
 
-        // If it's a base64 dataURL — upload to B2
-        if (finalImageUrl.startsWith("data:")) {
-          try {
-            const key = `final-designs/${orderId}-item${idx}-${uuidv4()}.png`;
-            finalImageUrl = await uploadBase64ToB2(finalImageUrl, key);
-          } catch (err) {
-            console.error("Failed to upload final design to B2:", err);
-            finalImageUrl = ""; // fallback — don't block the order
+        // 1. Process Customer's Original Photo
+        if (customImageUrl.startsWith("data:")) {
+          const ext = customImageUrl.includes("image/png") ? "png" : "jpg";
+          const key = `customer-uploads/${orderId}-item${idx + 1}-photo-${uuidv4()}.${ext}`;
+          const b2Url = await uploadBase64ToB2(customImageUrl, key);
+          if (b2Url) {
+            customImageUrl = b2Url;
           }
+          // If B2 fails, customImageUrl remains the base64 string, safely stored in MongoDB!
         }
 
-        return { ...item, finalImageUrl };
+        // 2. Process Sublimation Final Composite Design
+        if (finalImageUrl.startsWith("data:")) {
+          const key = `final-designs/${orderId}-item${idx + 1}-canvas-${uuidv4()}.png`;
+          const b2Url = await uploadBase64ToB2(finalImageUrl, key);
+          if (b2Url) {
+            finalImageUrl = b2Url;
+          }
+          // If B2 fails, finalImageUrl remains the base64 string, safely stored in MongoDB!
+        }
+
+        return {
+          ...item,
+          customImageUrl,
+          finalImageUrl,
+        };
       })
     );
 
@@ -83,7 +103,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ orderId: order.orderId, order }, { status: 201 });
   } catch (err) {
-    console.error(err);
+    console.error("Order creation failed:", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

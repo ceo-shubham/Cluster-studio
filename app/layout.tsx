@@ -1,25 +1,23 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
 import { Toaster } from "react-hot-toast";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
 import { ClerkProvider } from "@clerk/nextjs";
-import ClearLegacyCart from "@/components/layout/ClearLegacyCart";
-import FloatingContact from "@/components/layout/FloatingContact";
+import StoreLayoutWrapper from "@/components/layout/StoreLayoutWrapper";
 import "./globals.css";
 
 export const dynamic = "force-dynamic";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+const playfair = Playfair_Display({ variable: "--font-playfair", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Cluster Studio — Custom Prints",
-  description: "Premium custom prints on mugs, bottles, t-shirts, hoodies & more. Your imagination, our craft.",
-  keywords: "custom print, mug, t-shirt, hoodie, bottle, personalized gifts",
+  title: "Cluster Studio — Personalized Gifts Made with Love",
+  description: "Personalized gifts made with love for every moment. Custom mugs, magic mugs, bottles, t-shirts, hoodies, frames & keychains.",
+  keywords: "custom print, personalized gifts, magic mug, photo frame, bottle, t-shirt, anniversary gifts, birthday gifts",
   openGraph: {
-    title: "Cluster Studio",
-    description: "Premium custom prints. Order online.",
+    title: "Cluster Studio — Personalized Gifts Made with Love",
+    description: "Premium personalized gifts. For every moment, for every emotion.",
     type: "website",
   },
 };
@@ -31,16 +29,12 @@ const clerkConfigured =
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const body = (
     <>
-      <ClearLegacyCart />
-      <Navbar />
-      <main className="flex-1">{children}</main>
-      <Footer />
-      <FloatingContact />
+      <StoreLayoutWrapper>{children}</StoreLayoutWrapper>
       <Toaster
         position="top-right"
         toastOptions={{
           style: { borderRadius: "12px", fontFamily: "var(--font-geist-sans)" },
-          success: { style: { background: "#166534", color: "#fff" } },
+          success: { style: { background: "#670D1F", color: "#fff" } },
           error: { style: { background: "#991b1b", color: "#fff" } },
         }}
       />
@@ -49,7 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} antialiased min-h-screen flex flex-col font-sans`}>
         {clerkConfigured ? (
           <ClerkProvider>
             {body}

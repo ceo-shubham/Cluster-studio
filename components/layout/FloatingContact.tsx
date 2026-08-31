@@ -2,8 +2,8 @@
 import { usePathname } from "next/navigation";
 import { FaWhatsapp, FaPhone } from "react-icons/fa";
 
-const PHONE = "91XXXXXXXXXX";
-const WHATSAPP_MSG = "Hi! I'm interested in a custom print order.";
+const PHONE = "918380808435";
+const WHATSAPP_MSG = "Hi! I'm interested in a custom personalized order from Cluster Studio.";
 
 export default function FloatingContact() {
   const pathname = usePathname();
@@ -18,7 +18,7 @@ export default function FloatingContact() {
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Chat on WhatsApp"
-        className="w-12 h-12 rounded-full bg-[#25D366] hover:bg-[#1ebe5d] shadow-lg flex items-center justify-center transition-transform hover:scale-110"
+        className="w-12 h-12 rounded-full bg-[#25D366] hover:bg-[#1ebe5d] shadow-xl flex items-center justify-center transition-transform hover:scale-110 border border-white/20"
       >
         <FaWhatsapp size={24} className="text-white" />
       </a>
@@ -26,9 +26,9 @@ export default function FloatingContact() {
       <a
         href={`tel:+${PHONE}`}
         aria-label="Call us"
-        className="w-12 h-12 rounded-full bg-amber-600 hover:bg-amber-500 shadow-lg flex items-center justify-center transition-transform hover:scale-110"
+        className="w-12 h-12 rounded-full bg-[#670D1F] hover:bg-[#520817] shadow-xl flex items-center justify-center transition-transform hover:scale-110 border border-white/20"
       >
-        <FaPhone size={20} className="text-white" />
+        <FaPhone size={18} className="text-white" />
       </a>
     </div>
   );

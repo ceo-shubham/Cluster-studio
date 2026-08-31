@@ -28,10 +28,18 @@ export async function POST(req: NextRequest) {
     const ext = file.name.split(".").pop() || "jpg";
     const fileName = `uploads/${uuidv4()}.${ext}`;
 
-    const url = await uploadToBackblaze(buffer, fileName, file.type);
-    return NextResponse.json({ url, fileName });
+    // Try Backblaze B2 upload first
+    try {
+      const url = await uploadToBackblaze(buffer, fileName, file.type);
+      return NextResponse.json({ url, fileName, storage: "b2" });
+    } catch (b2Err) {
+      console.warn("B2 upload unavailable, falling back to database storage:", (b2Err as Error).message);
+      const dataUri = `data:${file.type};base64,${buffer.toString("base64")}`;
+      return NextResponse.json({ url: dataUri, fileName, storage: "db" });
+    }
   } catch (err) {
     console.error("Upload error:", err);
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 }
+

@@ -43,7 +43,7 @@ interface ShippingForm {
 function CheckoutInner({ auth }: { auth: SafeAuthState }) {
   const { isLoaded, isSignedIn, userId, userEmail, userName, openSignIn } = auth;
   const router = useRouter();
-  const { items, totalPrice, clearCart, clearCartForUser } = useCartStore();
+  const { items, totalPrice, clearCartForUser } = useCartStore();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<ShippingForm>({
     name: userName || "", phone: "", line1: "",
@@ -129,14 +129,14 @@ function CheckoutInner({ auth }: { auth: SafeAuthState }) {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-[#3b1c0c] mb-6 flex items-center gap-2">
-        <Lock size={22} /> Checkout
+      <h1 className="text-2xl sm:text-3xl font-serif font-bold text-gray-900 mb-6 flex items-center gap-2">
+        <Lock size={24} className="text-[#670D1F]" /> Secure Checkout
       </h1>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-2">
-          <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-amber-100 p-6">
-            <h2 className="font-bold text-gray-800 text-lg mb-4 flex items-center gap-2">
-              <MapPin size={18} className="text-amber-600" /> Shipping Address
+          <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-amber-100/80 p-6">
+            <h2 className="font-bold text-gray-900 text-base mb-4 flex items-center gap-2">
+              <MapPin size={18} className="text-[#670D1F]" /> Shipping Address
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[
@@ -148,52 +148,52 @@ function CheckoutInner({ auth }: { auth: SafeAuthState }) {
                 { name: "pincode", label: "Pincode *",         placeholder: "6-digit pincode",          span: false, max: 6 },
               ].map((f) => (
                 <div key={f.name} className={f.span ? "md:col-span-2" : ""}>
-                  <label className="text-sm font-medium text-gray-700 block mb-1">{f.label}</label>
+                  <label className="text-xs font-bold text-gray-700 block mb-1">{f.label}</label>
                   <input
                     name={f.name}
                     value={form[f.name as keyof ShippingForm]}
                     onChange={handleChange}
                     required={!f.optional}
                     maxLength={f.max}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm focus:outline-none focus:border-[#670D1F] bg-[#FAF7F2]/50"
                     placeholder={f.placeholder}
                   />
                 </div>
               ))}
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1">State *</label>
+                <label className="text-xs font-bold text-gray-700 block mb-1">State *</label>
                 <select name="state" value={form.state} onChange={handleChange} required
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 bg-white">
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm focus:outline-none focus:border-[#670D1F] bg-[#FAF7F2]/50">
                   <option value="">Select State</option>
                   {STATES.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
             </div>
-            <div className="mt-6 bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
-              <strong>Payment:</strong> Cash on Delivery (COD). We&apos;ll confirm via call/WhatsApp before dispatch.
+            <div className="mt-6 bg-rose-50/70 border border-rose-200/70 rounded-xl p-4 text-xs text-[#670D1F] leading-relaxed">
+              <strong>Payment:</strong> Cash on Delivery (COD) &amp; Express Delivery. Our artisan team will confirm your customization before dispatch.
             </div>
             <button type="submit" disabled={loading}
-              className="mt-6 w-full bg-amber-600 hover:bg-amber-700 disabled:bg-amber-300 text-white font-bold py-4 rounded-xl transition-colors">
-              {loading ? "Placing Order..." : "Place Order →"}
+              className="mt-6 w-full bg-[#670D1F] hover:bg-[#520817] disabled:opacity-60 text-white font-bold py-4 rounded-xl transition-all shadow-md text-sm uppercase tracking-wider">
+              {loading ? "Placing Order..." : "Confirm & Place Order →"}
             </button>
           </form>
         </div>
 
         <div className="md:col-span-1">
-          <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-5 sticky top-20">
-            <h2 className="font-bold text-gray-800 mb-4">Order Summary</h2>
+          <div className="bg-white rounded-2xl shadow-sm border border-amber-100/80 p-5 sticky top-28">
+            <h2 className="font-bold text-gray-900 mb-4 font-serif">Order Summary</h2>
             <div className="flex flex-col gap-3 max-h-64 overflow-y-auto mb-4">
               {items.map((item) => (
-                <div key={item.product.id} className="flex justify-between text-sm">
+                <div key={item.product.id} className="flex justify-between text-xs">
                   <span className="text-gray-600 truncate flex-1">{item.product.name} × {item.quantity}</span>
-                  <span className="font-semibold text-[#3b1c0c] ml-2">{formatPrice(item.product.price * item.quantity)}</span>
+                  <span className="font-bold text-gray-900 ml-2">{formatPrice(item.product.price * item.quantity)}</span>
                 </div>
               ))}
             </div>
-            <div className="border-t border-gray-100 pt-3 space-y-1">
-              <div className="flex justify-between text-sm text-gray-500"><span>Subtotal</span><span>{formatPrice(totalPrice())}</span></div>
-              <div className="flex justify-between text-sm"><span className="text-gray-500">Shipping</span><span className="text-green-600 font-medium">FREE</span></div>
-              <div className="flex justify-between font-bold text-[#3b1c0c] text-lg pt-1"><span>Total</span><span>{formatPrice(totalPrice())}</span></div>
+            <div className="border-t border-gray-100 pt-3 space-y-1.5">
+              <div className="flex justify-between text-xs text-gray-500"><span>Subtotal</span><span className="font-semibold text-gray-800">{formatPrice(totalPrice())}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-gray-500">Shipping</span><span className="text-emerald-600 font-bold">FREE</span></div>
+              <div className="flex justify-between font-bold text-[#670D1F] text-base pt-2 border-t border-gray-100"><span className="font-serif">Total</span><span>{formatPrice(totalPrice())}</span></div>
             </div>
           </div>
         </div>
