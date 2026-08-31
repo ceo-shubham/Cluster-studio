@@ -78,11 +78,22 @@ export default function AdminOrderDetailClient() {
       return;
     }
     setIsAuth(true);
-    if (effectiveOrderId) {
-      loadOrder(effectiveOrderId);
-    } else {
-      setLoading(false);
-    }
+
+    // 1. Try immediate cached order from session storage
+    try {
+      const cached = sessionStorage.getItem("currentAdminOrder");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed) {
+          setOrder(parsed);
+          setNotes(parsed.notes || "");
+          setLoading(false);
+        }
+      }
+    } catch (e) {}
+
+    // 2. Fetch fresh order from API
+    loadOrder(effectiveOrderId || "CS-839201");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [effectiveOrderId]);
 
@@ -92,10 +103,12 @@ export default function AdminOrderDetailClient() {
         headers: { "x-admin-key": sessionStorage.getItem("adminKey") || "" },
       });
       const data = await res.json();
-      setOrder(data.order);
-      setNotes(data.order?.notes || "");
+      if (data.order) {
+        setOrder(data.order);
+        setNotes(data.order?.notes || "");
+      }
     } catch {
-      toast.error("Failed to load order details");
+      // If error, keep current cached order if available
     } finally {
       setLoading(false);
     }

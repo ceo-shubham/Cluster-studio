@@ -481,6 +481,11 @@ export default function AdminDashboard() {
                         <td className="py-4 px-4 text-right pr-6 whitespace-nowrap">
                           <Link
                             href={`/admin/orders/${order.orderId}`}
+                            onClick={() => {
+                              try {
+                                sessionStorage.setItem("currentAdminOrder", JSON.stringify(order));
+                              } catch (e) {}
+                            }}
                             className="inline-flex items-center gap-1 bg-[#670D1F] hover:bg-[#520817] text-white font-bold text-xs px-3 py-1.5 rounded-xl transition-all shadow-xs"
                           >
                             <span>Manage</span>
