@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@clusterstudio.in";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "clusteradmin00studio";
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "cs-admin-token-2024";

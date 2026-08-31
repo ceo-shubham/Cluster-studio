@@ -4,6 +4,7 @@ import { GetObjectCommand } from "@aws-sdk/client-s3";
 import connectDB from "@/lib/mongodb";
 import Order from "@/models/Order";
 
+export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 function verifyAdmin(req: NextRequest): boolean {
