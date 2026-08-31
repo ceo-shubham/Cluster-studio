@@ -2,13 +2,12 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { formatPrice, formatDate } from "@/lib/utils";
-import Image from "next/image";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { 
   ArrowLeft, Download, User, MapPin, Package, 
   Phone, MessageSquare, Copy, Check, Clock, Truck, 
-  CheckCheck, XCircle, FileText, ExternalLink
+  CheckCheck, XCircle, FileText, Eye, ZoomIn, ZoomOut, RotateCcw
 } from "lucide-react";
 
 interface OrderDetail {
@@ -58,6 +57,7 @@ export default function AdminOrderDetailClient() {
   const [notes, setNotes] = useState("");
   const [isAuth, setIsAuth] = useState(false);
   const [copiedAddress, setCopiedAddress] = useState(false);
+  const [zoomScale, setZoomScale] = useState(1);
 
   useEffect(() => {
     const auth = sessionStorage.getItem("adminAuth");
@@ -117,6 +117,7 @@ export default function AdminOrderDetailClient() {
     try {
       toast.loading("Preparing download...", { id: "dl" });
 
+      // 1. If base64 dataURL — download directly via client Blob (instant & reliable)
       if (imageUrl && imageUrl.startsWith("data:")) {
         const matches = imageUrl.match(/^data:(.+);base64,(.+)$/);
         if (matches) {
@@ -141,17 +142,8 @@ export default function AdminOrderDetailClient() {
         }
       }
 
-      const adminKey = sessionStorage.getItem("adminKey") || "";
-      const isHttp = imageUrl && imageUrl.startsWith("http");
-      
-      const endpoint = isHttp
-        ? `/api/admin/download?url=${encodeURIComponent(imageUrl)}&filename=${encodeURIComponent(filename)}`
-        : `/api/admin/download?orderId=${order?.orderId}&itemIndex=${itemIdx}&type=${type}&filename=${encodeURIComponent(filename)}`;
-
-      const res = await fetch(endpoint, {
-        headers: { "x-admin-key": adminKey },
-      });
-
+      // 2. Direct fetch and trigger download
+      const res = await fetch(imageUrl);
       if (!res.ok) throw new Error("Download failed");
       const blob = await res.blob();
       const blobUrl = URL.createObjectURL(blob);
@@ -164,27 +156,10 @@ export default function AdminOrderDetailClient() {
       URL.revokeObjectURL(blobUrl);
       toast.success("Download complete!", { id: "dl" });
     } catch (err) {
-      console.error("Primary download failed, trying database lookup:", err);
-      try {
-        const adminKey = sessionStorage.getItem("adminKey") || "";
-        const fallbackRes = await fetch(
-          `/api/admin/download?orderId=${order?.orderId}&itemIndex=${itemIdx}&type=${type}&filename=${encodeURIComponent(filename)}`,
-          { headers: { "x-admin-key": adminKey } }
-        );
-        if (!fallbackRes.ok) throw new Error("Database fallback failed");
-        const blob = await fallbackRes.blob();
-        const blobUrl = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = blobUrl;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(blobUrl);
-        toast.success("Download complete!", { id: "dl" });
-      } catch {
-        toast.error("Could not download this image asset", { id: "dl" });
-      }
+      console.error("Download failed:", err);
+      // Fallback: open in new tab
+      window.open(imageUrl, "_blank");
+      toast.success("Opened image in new tab!", { id: "dl" });
     }
   };
 
@@ -260,42 +235,83 @@ export default function AdminOrderDetailClient() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-16">
-      {/* ── Image Lightbox Modal ── */}
+      {/* ── Interactive Image Lightbox Zoom Modal ── */}
       {previewImage && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-5 max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
-              <h3 className="font-bold text-slate-900 text-sm">{previewImage.title}</h3>
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-5 max-w-3xl w-full max-h-[92vh] flex flex-col shadow-2xl space-y-3">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-[#670D1F] block">High-Definition Artwork Inspector</span>
+                <h3 className="font-bold text-slate-900 text-sm sm:text-base">{previewImage.title}</h3>
+              </div>
               <button
-                onClick={() => setPreviewImage(null)}
+                onClick={() => { setPreviewImage(null); setZoomScale(1); }}
                 className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold flex items-center justify-center text-sm"
               >
                 ✕
               </button>
             </div>
-            <div className="relative flex-1 min-h-[350px] bg-slate-50 rounded-2xl overflow-hidden border border-slate-200">
-              <Image src={previewImage.url} alt={previewImage.title} fill className="object-contain p-2" />
+
+            {/* Zoom Controls */}
+            <div className="flex items-center justify-between bg-slate-50 p-2 rounded-xl border border-slate-200 text-xs">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setZoomScale(s => Math.min(s + 0.25, 3))}
+                  className="bg-white hover:bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 shadow-2xs"
+                >
+                  <ZoomIn size={14} /> Zoom In
+                </button>
+                <button
+                  onClick={() => setZoomScale(s => Math.max(s - 0.25, 0.5))}
+                  className="bg-white hover:bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 shadow-2xs"
+                >
+                  <ZoomOut size={14} /> Zoom Out
+                </button>
+                <button
+                  onClick={() => setZoomScale(1)}
+                  className="bg-white hover:bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 shadow-2xs"
+                >
+                  <RotateCcw size={13} /> Reset ({Math.round(zoomScale * 100)}%)
+                </button>
+              </div>
+
+              <span className="text-slate-500 font-medium text-[11px]">Ready for Sublimation Printing</span>
             </div>
-            <div className="pt-3 flex justify-end gap-2">
-              <button
-                onClick={() => setPreviewImage(null)}
-                className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 text-xs font-bold"
-              >
-                Close
-              </button>
-              <button
-                onClick={() =>
-                  downloadImage(
-                    previewImage.url,
-                    previewImage.filename || `${order.orderId}-preview.png`,
-                    previewImage.itemIdx || 0,
-                    previewImage.type || "final"
-                  )
-                }
-                className="px-4 py-2 rounded-xl bg-[#670D1F] text-white text-xs font-bold flex items-center gap-1.5 shadow hover:bg-[#520817] transition-colors"
-              >
-                <Download size={14} /> Download Full Resolution
-              </button>
+
+            {/* Zoomable Image Container */}
+            <div className="relative flex-1 min-h-[360px] max-h-[55vh] bg-slate-900/90 rounded-2xl overflow-auto border border-slate-800 flex items-center justify-center p-4">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={previewImage.url}
+                alt={previewImage.title}
+                style={{ transform: `scale(${zoomScale})`, transition: "transform 0.15s ease-out" }}
+                className="max-h-[50vh] max-w-full object-contain rounded-lg shadow-xl"
+              />
+            </div>
+
+            <div className="pt-2 flex items-center justify-between">
+              <span className="text-xs text-slate-500">Right click to copy or download full-res binary.</span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setPreviewImage(null); setZoomScale(1); }}
+                  className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-50"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() =>
+                    downloadImage(
+                      previewImage.url,
+                      previewImage.filename || `${order.orderId}-preview.png`,
+                      previewImage.itemIdx || 0,
+                      previewImage.type || "final"
+                    )
+                  }
+                  className="px-4 py-2 rounded-xl bg-[#670D1F] text-white text-xs font-bold flex items-center gap-1.5 shadow hover:bg-[#520817] transition-colors"
+                >
+                  <Download size={14} /> Download Image
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -365,10 +381,15 @@ export default function AdminOrderDetailClient() {
             {/* 1. Purchased Items with Artwork Previews */}
             <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <h2 className="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-2">
-                  <Package size={18} className="text-[#670D1F]" />
-                  Ordered Items &amp; Production Assets ({order.items.length})
-                </h2>
+                <div>
+                  <h2 className="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-2">
+                    <Package size={18} className="text-[#670D1F]" />
+                    Ordered Items &amp; Production Assets ({order.items.length})
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Click on any image thumbnail to open the High-Definition Zoom Inspector or click Download.
+                  </p>
+                </div>
               </div>
 
               <div className="space-y-4">
@@ -379,12 +400,12 @@ export default function AdminOrderDetailClient() {
                   >
                     {/* Item row */}
                     <div className="flex items-start gap-4">
-                      <div className="relative w-18 h-18 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-white border border-slate-200 shrink-0 shadow-xs">
-                        <Image
+                      <div className="relative w-18 h-18 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-white border border-slate-200 shrink-0 shadow-xs flex items-center justify-center">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
                           src={item.finalImageUrl || item.productImage}
                           alt={item.productName}
-                          fill
-                          className="object-contain p-1"
+                          className="w-full h-full object-contain p-1"
                         />
                       </div>
                       
@@ -396,7 +417,7 @@ export default function AdminOrderDetailClient() {
                           {(item.customImageUrl || item.finalImageUrl) && (
                             <button
                               onClick={() => downloadAllAssets(item, idx)}
-                              className="text-[11px] font-bold text-[#670D1F] hover:underline flex items-center gap-1 shrink-0"
+                              className="text-[11px] font-bold text-[#670D1F] hover:underline flex items-center gap-1 shrink-0 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-lg"
                             >
                               <Download size={12} /> Download Both Assets
                             </button>
@@ -413,7 +434,7 @@ export default function AdminOrderDetailClient() {
                       </div>
                     </div>
 
-                    {/* Custom Design Assets / Downloads Strip */}
+                    {/* Custom Design Assets Strip */}
                     <div className="pt-3 border-t border-slate-200/60 grid grid-cols-1 sm:grid-cols-2 gap-3">
                       
                       {/* Asset 1: Original User Upload Photo */}
@@ -424,16 +445,20 @@ export default function AdminOrderDetailClient() {
                               onClick={() =>
                                 setPreviewImage({
                                   url: item.customImageUrl!,
-                                  title: `${order.orderId} - Customer Original Photo`,
+                                  title: `${order.orderId} - Customer Original Uploaded Photo`,
                                   filename: `${order.orderId}-item${idx + 1}-customer-photo.jpg`,
                                   itemIdx: idx,
                                   type: "original",
                                 })
                               }
-                              className="relative w-12 h-12 rounded-lg overflow-hidden bg-slate-100 shrink-0 border border-slate-200 hover:opacity-80 transition-opacity"
+                              className="relative w-12 h-12 rounded-lg overflow-hidden bg-slate-100 shrink-0 border border-slate-200 hover:opacity-80 transition-opacity group flex items-center justify-center"
                               title="Click to zoom preview"
                             >
-                              <Image src={item.customImageUrl} alt="Upload thumb" fill className="object-cover" />
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={item.customImageUrl} alt="Upload thumb" className="w-full h-full object-cover" />
+                              <span className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-bold">
+                                <Eye size={14} />
+                              </span>
                             </button>
                           ) : (
                             <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 text-slate-400">
@@ -449,24 +474,41 @@ export default function AdminOrderDetailClient() {
                         </div>
 
                         {item.customImageUrl && (
-                          <button
-                            onClick={() =>
-                              downloadImage(
-                                item.customImageUrl!,
-                                `${order.orderId}-item${idx + 1}-customer-photo.jpg`,
-                                idx,
-                                "original"
-                              )
-                            }
-                            className="bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold px-3 py-2 rounded-lg transition-colors flex items-center gap-1 shrink-0 border border-blue-200"
-                          >
-                            <Download size={13} />
-                            <span>Download</span>
-                          </button>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              onClick={() =>
+                                setPreviewImage({
+                                  url: item.customImageUrl!,
+                                  title: `${order.orderId} - Customer Original Uploaded Photo`,
+                                  filename: `${order.orderId}-item${idx + 1}-customer-photo.jpg`,
+                                  itemIdx: idx,
+                                  type: "original",
+                                })
+                              }
+                              className="p-2 rounded-lg text-slate-600 hover:bg-slate-100 border border-slate-200"
+                              title="View full size"
+                            >
+                              <Eye size={13} />
+                            </button>
+                            <button
+                              onClick={() =>
+                                downloadImage(
+                                  item.customImageUrl!,
+                                  `${order.orderId}-item${idx + 1}-customer-photo.jpg`,
+                                  idx,
+                                  "original"
+                                )
+                              }
+                              className="bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold px-3 py-2 rounded-lg transition-colors flex items-center gap-1 border border-blue-200"
+                            >
+                              <Download size={13} />
+                              <span>Download</span>
+                            </button>
+                          </div>
                         )}
                       </div>
 
-                      {/* Asset 2: Final Composite Sublimation Design */}
+                      {/* Asset 2: Final Composite Sublimation Design / Mockup */}
                       <div className="bg-white p-3 rounded-xl border border-slate-200 flex items-center justify-between gap-3 shadow-xs">
                         <div className="flex items-center gap-2.5 min-w-0">
                           {item.finalImageUrl ? (
@@ -474,16 +516,20 @@ export default function AdminOrderDetailClient() {
                               onClick={() =>
                                 setPreviewImage({
                                   url: item.finalImageUrl!,
-                                  title: `${order.orderId} - Final Sublimation Print Canvas`,
+                                  title: `${order.orderId} - Final Edited Sublimation Print Canvas`,
                                   filename: `${order.orderId}-item${idx + 1}-final-print-design.png`,
                                   itemIdx: idx,
                                   type: "final",
                                 })
                               }
-                              className="relative w-12 h-12 rounded-lg overflow-hidden bg-slate-100 shrink-0 border border-slate-200 hover:opacity-80 transition-opacity"
+                              className="relative w-12 h-12 rounded-lg overflow-hidden bg-slate-100 shrink-0 border border-slate-200 hover:opacity-80 transition-opacity group flex items-center justify-center"
                               title="Click to zoom preview"
                             >
-                              <Image src={item.finalImageUrl} alt="Final thumb" fill className="object-cover" />
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={item.finalImageUrl} alt="Final thumb" className="w-full h-full object-cover" />
+                              <span className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-bold">
+                                <Eye size={14} />
+                              </span>
                             </button>
                           ) : (
                             <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 text-slate-400">
@@ -493,26 +539,43 @@ export default function AdminOrderDetailClient() {
                           <div className="min-w-0">
                             <span className="text-[10px] font-bold text-slate-500 uppercase block">2. Print Canvas</span>
                             <span className="text-xs font-semibold text-slate-800 truncate block">
-                              {item.finalImageUrl ? "Sublimation Mockup" : "Standard Print"}
+                              {item.finalImageUrl ? "Edited Mockup Design" : "Standard Print"}
                             </span>
                           </div>
                         </div>
 
                         {item.finalImageUrl && (
-                          <button
-                            onClick={() =>
-                              downloadImage(
-                                item.finalImageUrl!,
-                                `${order.orderId}-item${idx + 1}-final-print-design.png`,
-                                idx,
-                                "final"
-                              )
-                            }
-                            className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold px-3 py-2 rounded-lg transition-colors flex items-center gap-1 shrink-0 border border-emerald-200"
-                          >
-                            <Download size={13} />
-                            <span>Download</span>
-                          </button>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              onClick={() =>
+                                setPreviewImage({
+                                  url: item.finalImageUrl!,
+                                  title: `${order.orderId} - Final Edited Sublimation Print Canvas`,
+                                  filename: `${order.orderId}-item${idx + 1}-final-print-design.png`,
+                                  itemIdx: idx,
+                                  type: "final",
+                                })
+                              }
+                              className="p-2 rounded-lg text-slate-600 hover:bg-slate-100 border border-slate-200"
+                              title="View full size"
+                            >
+                              <Eye size={13} />
+                            </button>
+                            <button
+                              onClick={() =>
+                                downloadImage(
+                                  item.finalImageUrl!,
+                                  `${order.orderId}-item${idx + 1}-final-print-design.png`,
+                                  idx,
+                                  "final"
+                                )
+                              }
+                              className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold px-3 py-2 rounded-lg transition-colors flex items-center gap-1 border border-emerald-200"
+                            >
+                              <Download size={13} />
+                              <span>Download</span>
+                            </button>
+                          </div>
                         )}
                       </div>
 
