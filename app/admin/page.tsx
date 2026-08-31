@@ -483,6 +483,7 @@ export default function AdminDashboard() {
                             href={`/admin/orders/${order.orderId}`}
                             onClick={() => {
                               try {
+                                sessionStorage.setItem(`currentAdminOrder_${order.orderId}`, JSON.stringify(order));
                                 sessionStorage.setItem("currentAdminOrder", JSON.stringify(order));
                               } catch (e) {}
                             }}

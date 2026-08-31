@@ -79,12 +79,18 @@ export default function AdminOrderDetailClient() {
     }
     setIsAuth(true);
 
-    // 1. Try immediate cached order from session storage
+    const targetId = effectiveOrderId;
+    if (!targetId) {
+      setLoading(false);
+      return;
+    }
+
+    // 1. Try order-specific cached order from session storage
     try {
-      const cached = sessionStorage.getItem("currentAdminOrder");
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (parsed) {
+      const specificCached = sessionStorage.getItem(`currentAdminOrder_${targetId}`);
+      if (specificCached) {
+        const parsed = JSON.parse(specificCached);
+        if (parsed && parsed.orderId === targetId) {
           setOrder(parsed);
           setNotes(parsed.notes || "");
           setLoading(false);
@@ -93,7 +99,7 @@ export default function AdminOrderDetailClient() {
     } catch (e) {}
 
     // 2. Fetch fresh order from API
-    loadOrder(effectiveOrderId || "CS-839201");
+    loadOrder(targetId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [effectiveOrderId]);
 
@@ -103,12 +109,12 @@ export default function AdminOrderDetailClient() {
         headers: { "x-admin-key": sessionStorage.getItem("adminKey") || "" },
       });
       const data = await res.json();
-      if (data.order) {
+      if (data.order && (data.order.orderId === idToFetch || !order)) {
         setOrder(data.order);
         setNotes(data.order?.notes || "");
       }
     } catch {
-      // If error, keep current cached order if available
+      // Keep cached order if available
     } finally {
       setLoading(false);
     }
