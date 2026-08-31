@@ -28,22 +28,33 @@ interface OrderDetail {
 const STEPS = ["pending", "confirmed", "processing", "shipped", "delivered"];
 
 export default function OrderDetailClient() {
-  const { orderId } = useParams<{ orderId: string }>();
+  const params = useParams<{ orderId: string }>();
+  const getEffectiveOrderId = () => {
+    if (params?.orderId && params.orderId !== "view") return params.orderId;
+    if (typeof window !== "undefined") {
+      const parts = window.location.pathname.split("/").filter(Boolean);
+      const last = parts[parts.length - 1];
+      if (last && last !== "view") return last;
+    }
+    return "";
+  };
+
+  const effectiveOrderId = getEffectiveOrderId();
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [showConfirm, setShowConfirm] = useState(false);
   const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
-    if (!orderId || orderId === "view") {
+    if (!effectiveOrderId) {
       setLoading(false);
       return;
     }
-    fetch(`/api/orders/${orderId}`)
+    fetch(`/api/orders/${effectiveOrderId}`)
       .then((r) => r.json())
       .then((data) => { setOrder(data.order); setLoading(false); })
       .catch(() => setLoading(false));
-  }, [orderId]);
+  }, [effectiveOrderId]);
 
   const handleCancel = async () => {
     setCancelling(true);

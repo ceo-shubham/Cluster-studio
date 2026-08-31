@@ -49,8 +49,20 @@ const STATUSES = [
 ];
 
 export default function AdminOrderDetailClient() {
-  const { orderId } = useParams<{ orderId: string }>();
+  const params = useParams<{ orderId: string }>();
   const router = useRouter();
+
+  const getEffectiveOrderId = () => {
+    if (params?.orderId && params.orderId !== "view") return params.orderId;
+    if (typeof window !== "undefined") {
+      const parts = window.location.pathname.split("/").filter(Boolean);
+      const last = parts[parts.length - 1];
+      if (last && last !== "view") return last;
+    }
+    return "";
+  };
+
+  const effectiveOrderId = getEffectiveOrderId();
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [updatingStatus, setUpdatingStatus] = useState(false);
@@ -66,17 +78,17 @@ export default function AdminOrderDetailClient() {
       return;
     }
     setIsAuth(true);
-    if (orderId && orderId !== "view") {
-      loadOrder();
+    if (effectiveOrderId) {
+      loadOrder(effectiveOrderId);
     } else {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [effectiveOrderId]);
 
-  const loadOrder = async () => {
+  const loadOrder = async (idToFetch: string) => {
     try {
-      const res = await fetch(`/api/admin/orders/${orderId}`, {
+      const res = await fetch(`/api/admin/orders/${idToFetch}`, {
         headers: { "x-admin-key": sessionStorage.getItem("adminKey") || "" },
       });
       const data = await res.json();
@@ -93,7 +105,7 @@ export default function AdminOrderDetailClient() {
     if (!order) return;
     setUpdatingStatus(true);
     try {
-      const res = await fetch(`/api/admin/orders/${orderId}`, {
+      const res = await fetch(`/api/admin/orders/${order.orderId || effectiveOrderId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
