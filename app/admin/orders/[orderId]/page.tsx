@@ -107,33 +107,83 @@ export default function AdminOrderDetail() {
     }
   };
 
-  const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
+  const [previewImage, setPreviewImage] = useState<{ url: string; title: string; filename: string; itemIdx: number; type: string } | null>(null);
 
   const downloadImage = async (imageUrl: string, filename: string, itemIdx = 0, type = "original") => {
     try {
       toast.loading("Preparing download...", { id: "dl" });
-      const adminKey = sessionStorage.getItem("adminKey") || "";
-      
-      // Try downloading via URL first, or via orderId fallback
-      let endpoint = `/api/admin/download?url=${encodeURIComponent(imageUrl)}&filename=${encodeURIComponent(filename)}`;
-      if (!imageUrl || imageUrl.length < 5) {
-        endpoint = `/api/admin/download?orderId=${order?.orderId}&itemIndex=${itemIdx}&type=${type}&filename=${encodeURIComponent(filename)}`;
+
+      // 1. If base64 dataURL — download directly via client Blob (instant & avoids URL length limits)
+      if (imageUrl && imageUrl.startsWith("data:")) {
+        const matches = imageUrl.match(/^data:(.+);base64,(.+)$/);
+        if (matches) {
+          const contentType = matches[1];
+          const byteCharacters = atob(matches[2]);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: contentType });
+          const blobUrl = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = blobUrl;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(blobUrl);
+          toast.success("Downloaded successfully!", { id: "dl" });
+          return;
+        }
       }
+
+      // 2. If short URL or stored in DB — fetch via Admin API endpoint
+      const adminKey = sessionStorage.getItem("adminKey") || "";
+      const isHttp = imageUrl && imageUrl.startsWith("http");
+      
+      const endpoint = isHttp
+        ? `/api/admin/download?url=${encodeURIComponent(imageUrl)}&filename=${encodeURIComponent(filename)}`
+        : `/api/admin/download?orderId=${order?.orderId}&itemIndex=${itemIdx}&type=${type}&filename=${encodeURIComponent(filename)}`;
 
       const res = await fetch(endpoint, {
         headers: { "x-admin-key": adminKey },
       });
+
       if (!res.ok) throw new Error("Download failed");
       const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
+      const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url;
+      a.href = blobUrl;
       a.download = filename;
+      document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
       toast.success("Download complete!", { id: "dl" });
-    } catch {
-      toast.error("Download failed — check server logs", { id: "dl" });
+    } catch (err) {
+      console.error("Primary download failed, trying database lookup:", err);
+      // 3. Fallback: try database lookup via orderId
+      try {
+        const adminKey = sessionStorage.getItem("adminKey") || "";
+        const fallbackRes = await fetch(
+          `/api/admin/download?orderId=${order?.orderId}&itemIndex=${itemIdx}&type=${type}&filename=${encodeURIComponent(filename)}`,
+          { headers: { "x-admin-key": adminKey } }
+        );
+        if (!fallbackRes.ok) throw new Error("Database fallback failed");
+        const blob = await fallbackRes.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+        toast.success("Download complete!", { id: "dl" });
+      } catch {
+        toast.error("Could not download this image asset", { id: "dl" });
+      }
     }
   };
 
@@ -233,8 +283,15 @@ export default function AdminOrderDetail() {
                 Close
               </button>
               <button
-                onClick={() => downloadImage(previewImage.url, `${order.orderId}-preview.png`)}
-                className="px-4 py-2 rounded-xl bg-[#670D1F] text-white text-xs font-bold flex items-center gap-1.5 shadow"
+                onClick={() =>
+                  downloadImage(
+                    previewImage.url,
+                    previewImage.filename || `${order.orderId}-preview.png`,
+                    previewImage.itemIdx || 0,
+                    previewImage.type || "final"
+                  )
+                }
+                className="px-4 py-2 rounded-xl bg-[#670D1F] text-white text-xs font-bold flex items-center gap-1.5 shadow hover:bg-[#520817] transition-colors"
               >
                 <Download size={14} /> Download Full Resolution
               </button>
@@ -367,6 +424,9 @@ export default function AdminOrderDetail() {
                                 setPreviewImage({
                                   url: item.customImageUrl!,
                                   title: `${order.orderId} - Customer Original Photo`,
+                                  filename: `${order.orderId}-item${idx + 1}-customer-photo.jpg`,
+                                  itemIdx: idx,
+                                  type: "original",
                                 })
                               }
                               className="relative w-12 h-12 rounded-lg overflow-hidden bg-slate-100 shrink-0 border border-slate-200 hover:opacity-80 transition-opacity"
@@ -414,6 +474,9 @@ export default function AdminOrderDetail() {
                                 setPreviewImage({
                                   url: item.finalImageUrl!,
                                   title: `${order.orderId} - Final Sublimation Print Canvas`,
+                                  filename: `${order.orderId}-item${idx + 1}-final-print-design.png`,
+                                  itemIdx: idx,
+                                  type: "final",
                                 })
                               }
                               className="relative w-12 h-12 rounded-lg overflow-hidden bg-slate-100 shrink-0 border border-slate-200 hover:opacity-80 transition-opacity"
