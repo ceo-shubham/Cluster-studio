@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { 
@@ -7,7 +7,7 @@ import {
   Upload, Type, Check, Sparkles, ShieldCheck, Truck, 
   RefreshCw, Plus, Minus, Image as ImageIcon, ArrowLeft,
   X, CheckCircle, Info, Trash2, ZoomIn, ZoomOut, RotateCw,
-  Move, Sliders, Layers
+  Move, Sliders, Layers, MousePointer, Maximize2
 } from "lucide-react";
 import { getProductById, products } from "@/lib/products";
 import { formatPrice } from "@/lib/utils";
@@ -28,23 +28,40 @@ export default function ProductDetailClient() {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   
-  // Customizer Mode State
+  // ── Customizer Mode State ──
   const [isCustomizing, setIsCustomizing] = useState(false);
   const [customizeTab, setCustomizeTab] = useState<"upload" | "text">("upload");
+  const [selectedElement, setSelectedElement] = useState<"image" | "text" | null>(null);
+
+  // Photo State (Normalized -0.5 to +0.5 relative to preview center)
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [imgX, setImgX] = useState<number>(0);
+  const [imgY, setImgY] = useState<number>(0);
   const [imageScale, setImageScale] = useState<number>(1);
-  const [imagePosX, setImagePosX] = useState<number>(0);
-  const [imagePosY, setImagePosY] = useState<number>(0);
   const [imageRotation, setImageRotation] = useState<number>(0);
 
+  // Text State (Normalized -0.5 to +0.5 relative to preview center)
   const [customText, setCustomText] = useState("");
+  const [textX, setTextX] = useState<number>(0);
+  const [textY, setTextY] = useState<number>(0.18);
   const [textColor, setTextColor] = useState("#5E1224");
   const [fontSize, setFontSize] = useState(20);
-  const [textFontStyle, setTextFontStyle] = useState<"cursive" | "serif" | "sans" | "bold" | "handwriting">("cursive");
-  const [textPosY, setTextPosY] = useState<number>(0);
+  const [textFontStyle, setTextFontStyle] = useState<"cursive" | "serif" | "sans" | "bold">("cursive");
+  const [textRotation, setTextRotation] = useState<number>(0);
 
-  const [isCompositing, setIsCompositing] = useState(false);
+  // Dragging State
+  const [isDragging, setIsDragging] = useState(false);
+  const dragRef = useRef<{
+    target: "image" | "text";
+    startX: number;
+    startY: number;
+    initialElemX: number;
+    initialElemY: number;
+  } | null>(null);
+
+  const previewContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isCompositing, setIsCompositing] = useState(false);
 
   if (!product) {
     return (
@@ -89,35 +106,109 @@ export default function ProductDetailClient() {
     const reader = new FileReader();
     reader.onload = () => {
       setUploadedImage(reader.result as string);
+      setImgX(0);
+      setImgY(0);
       setImageScale(1);
-      setImagePosX(0);
-      setImagePosY(0);
       setImageRotation(0);
-      toast.success("Image added to mockup!");
+      setSelectedElement("image");
+      toast.success("Photo added! You can drag it anywhere on the product.");
     };
     reader.readAsDataURL(file);
   };
 
-  const handleRemoveImage = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleRemoveImage = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     setUploadedImage(null);
+    setSelectedElement(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
-    toast.success("Uploaded image removed");
+    toast.success("Uploaded photo removed");
   };
 
   const handleResetDesign = () => {
     setUploadedImage(null);
+    setImgX(0);
+    setImgY(0);
     setImageScale(1);
-    setImagePosX(0);
-    setImagePosY(0);
     setImageRotation(0);
     setCustomText("");
-    setTextPosY(0);
+    setTextX(0);
+    setTextY(0.18);
+    setTextRotation(0);
+    setSelectedElement(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
     toast.success("Design reset");
   };
 
-  // Generate composite mockup canvas
+  /* ── Direct Freeform Dragging Handlers ── */
+  const startDrag = (target: "image" | "text", clientX: number, clientY: number) => {
+    setSelectedElement(target);
+    setIsDragging(true);
+    dragRef.current = {
+      target,
+      startX: clientX,
+      startY: clientY,
+      initialElemX: target === "image" ? imgX : textX,
+      initialElemY: target === "image" ? imgY : textY,
+    };
+  };
+
+  const onPointerDownImage = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+    const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
+    startDrag("image", clientX, clientY);
+  };
+
+  const onPointerDownText = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+    const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
+    startDrag("text", clientX, clientY);
+  };
+
+  const onPointerMove = useCallback((e: MouseEvent | TouchEvent) => {
+    if (!dragRef.current || !previewContainerRef.current) return;
+    const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+    const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
+
+    const rect = previewContainerRef.current.getBoundingClientRect();
+    const deltaNormX = (clientX - dragRef.current.startX) / rect.width;
+    const deltaNormY = (clientY - dragRef.current.startY) / rect.height;
+
+    if (dragRef.current.target === "image") {
+      const newX = Math.max(-0.45, Math.min(0.45, dragRef.current.initialElemX + deltaNormX));
+      const newY = Math.max(-0.45, Math.min(0.45, dragRef.current.initialElemY + deltaNormY));
+      setImgX(newX);
+      setImgY(newY);
+    } else if (dragRef.current.target === "text") {
+      const newX = Math.max(-0.45, Math.min(0.45, dragRef.current.initialElemX + deltaNormX));
+      const newY = Math.max(-0.45, Math.min(0.45, dragRef.current.initialElemY + deltaNormY));
+      setTextX(newX);
+      setTextY(newY);
+    }
+  }, []);
+
+  const onPointerUp = useCallback(() => {
+    setIsDragging(false);
+    dragRef.current = null;
+  }, []);
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener("mousemove", onPointerMove);
+      window.addEventListener("mouseup", onPointerUp);
+      window.addEventListener("touchmove", onPointerMove, { passive: false });
+      window.addEventListener("touchend", onPointerUp);
+      return () => {
+        window.removeEventListener("mousemove", onPointerMove);
+        window.removeEventListener("mouseup", onPointerUp);
+        window.removeEventListener("touchmove", onPointerMove);
+        window.removeEventListener("touchend", onPointerUp);
+      };
+    }
+  }, [isDragging, onPointerMove, onPointerUp]);
+
+  /* ── Canvas High-Res Composite Generator ── */
   const generateCompositeImage = async (): Promise<string> => {
     if (!uploadedImage && !customText.trim()) {
       return product.image;
@@ -125,8 +216,8 @@ export default function ProductDetailClient() {
 
     return new Promise((resolve) => {
       const canvas = document.createElement("canvas");
-      canvas.width = 600;
-      canvas.height = 600;
+      canvas.width = 800;
+      canvas.height = 800;
       const ctx = canvas.getContext("2d");
       if (!ctx) {
         resolve(uploadedImage || product.image);
@@ -138,8 +229,8 @@ export default function ProductDetailClient() {
       baseImg.src = product.image;
 
       baseImg.onload = () => {
-        // 1. Draw base product
-        ctx.drawImage(baseImg, 0, 0, 600, 600);
+        // 1. Draw base product mockup (clean 800x800)
+        ctx.drawImage(baseImg, 0, 0, 800, 800);
 
         // 2. Draw user uploaded photo if present
         if (uploadedImage) {
@@ -149,26 +240,30 @@ export default function ProductDetailClient() {
 
           userImg.onload = () => {
             ctx.save();
-            const cx = 300 + imagePosX * 1.5;
-            const cy = 300 + imagePosY * 1.5;
+            const cx = (0.5 + imgX) * 800;
+            const cy = (0.5 + imgY) * 800;
             ctx.translate(cx, cy);
             ctx.rotate((imageRotation * Math.PI) / 180);
-            ctx.scale(imageScale, imageScale);
 
-            // Size proportionally
-            const targetDim = 220;
+            // Proportional sizing
+            const baseDim = 320 * imageScale;
             const iw = userImg.naturalWidth || 200;
             const ih = userImg.naturalHeight || 200;
-            const base = Math.min(targetDim / iw, targetDim / ih);
-            const dw = iw * base;
-            const dh = ih * base;
+            const aspect = iw / ih;
+            let dw = baseDim;
+            let dh = baseDim;
+            if (aspect > 1) {
+              dh = baseDim / aspect;
+            } else {
+              dw = baseDim * aspect;
+            }
 
             ctx.drawImage(userImg, -dw / 2, -dh / 2, dw, dh);
             ctx.restore();
 
             // 3. Draw text after image
             if (customText.trim()) {
-              drawCustomTextOnCanvas(ctx);
+              drawTextOnCanvas(ctx);
             }
 
             resolve(canvas.toDataURL("image/png"));
@@ -176,12 +271,12 @@ export default function ProductDetailClient() {
 
           userImg.onerror = () => {
             if (customText.trim()) {
-              drawCustomTextOnCanvas(ctx);
+              drawTextOnCanvas(ctx);
             }
             resolve(canvas.toDataURL("image/png"));
           };
         } else if (customText.trim()) {
-          drawCustomTextOnCanvas(ctx);
+          drawTextOnCanvas(ctx);
           resolve(canvas.toDataURL("image/png"));
         } else {
           resolve(canvas.toDataURL("image/png"));
@@ -194,9 +289,12 @@ export default function ProductDetailClient() {
     });
   };
 
-  const drawCustomTextOnCanvas = (ctx: CanvasRenderingContext2D) => {
+  const drawTextOnCanvas = (ctx: CanvasRenderingContext2D) => {
     ctx.save();
-    const ty = (uploadedImage ? 430 : 300) + textPosY * 1.5;
+    const cx = (0.5 + textX) * 800;
+    const cy = (0.5 + textY) * 800;
+    ctx.translate(cx, cy);
+    ctx.rotate((textRotation * Math.PI) / 180);
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillStyle = textColor;
@@ -205,12 +303,11 @@ export default function ProductDetailClient() {
     if (textFontStyle === "cursive") fontFam = "cursive, 'Brush Script MT', italic";
     else if (textFontStyle === "serif") fontFam = "Georgia, serif";
     else if (textFontStyle === "bold") fontFam = "Impact, sans-serif";
-    else if (textFontStyle === "handwriting") fontFam = "cursive, 'Comic Sans MS'";
 
-    ctx.font = `bold ${Math.round(fontSize * 1.4)}px ${fontFam}`;
-    ctx.shadowColor = "rgba(0,0,0,0.25)";
-    ctx.shadowBlur = 4;
-    ctx.fillText(customText, 300, ty);
+    ctx.font = `bold ${Math.round(fontSize * 1.6)}px ${fontFam}`;
+    ctx.shadowColor = "rgba(0,0,0,0.3)";
+    ctx.shadowBlur = 6;
+    ctx.fillText(customText, 0, 0);
     ctx.restore();
   };
 
@@ -224,9 +321,12 @@ export default function ProductDetailClient() {
         customText,
         textColor,
         imageScale,
-        imagePosX,
-        imagePosY,
+        imgX,
+        imgY,
         imageRotation,
+        textX,
+        textY,
+        textRotation,
       });
 
       for (let i = 0; i < quantity; i++) {
@@ -237,7 +337,7 @@ export default function ProductDetailClient() {
           canvasState
         );
       }
-      toast.success(`${product.name} with custom design added to cart!`);
+      toast.success(`${product.name} with your custom placement added to cart!`);
       setIsCustomizing(false);
     } catch {
       for (let i = 0; i < quantity; i++) {
@@ -260,6 +360,8 @@ export default function ProductDetailClient() {
         customText,
         textColor,
         imageScale,
+        imgX,
+        imgY,
       });
 
       for (let i = 0; i < quantity; i++) {
@@ -295,7 +397,6 @@ export default function ProductDetailClient() {
     if (textFontStyle === "cursive") return "cursive, 'Brush Script MT', sans-serif";
     if (textFontStyle === "serif") return "Georgia, serif";
     if (textFontStyle === "bold") return "Impact, sans-serif";
-    if (textFontStyle === "handwriting") return "'Caveat', cursive, 'Comic Sans MS'";
     return "ui-sans-serif, system-ui, sans-serif";
   };
 
@@ -322,7 +423,7 @@ export default function ProductDetailClient() {
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════ */}
-      {/* ── SCREEN 4: CUSTOMIZE VIEW (When isCustomizing is true) ─────── */}
+      {/* ── SCREEN 4: FREEFORM LIVE CUSTOMIZER STUDIO ─────────────────── */}
       {/* ══════════════════════════════════════════════════════════════════ */}
       {isCustomizing ? (
         <div className="space-y-6 animate-in fade-in duration-200">
@@ -331,13 +432,13 @@ export default function ProductDetailClient() {
           <div className="flex items-center justify-between">
             <div>
               <div className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#5E1224] bg-rose-50 border border-rose-200 px-2.5 py-0.5 rounded-full mb-1">
-                <Sparkles size={12} /> Live 3D Customizer Studio
+                <Sparkles size={12} /> Freeform Drag &amp; Drop Studio
               </div>
               <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#221518]">
                 Customize Your {product.name}
               </h1>
               <p className="text-xs text-[#736B6D] mt-0.5">
-                Preview your photo and personalized message in real-time on clean product mockup.
+                Drag photo and text freely anywhere on the product. No boundary restrictions.
               </p>
             </div>
             <button
@@ -348,12 +449,12 @@ export default function ProductDetailClient() {
             </button>
           </div>
 
-          {/* ── LIVE INTERACTIVE MOCKUP PREVIEW (Clean Showimg Mockup) ── */}
+          {/* ── FREE-ROAM INTERACTIVE MOCKUP STAGE ── */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-[#736B6D] flex items-center gap-1.5">
-                <Sparkles size={14} className="text-[#5E1224]" />
-                <span>Live Interactive Mockup</span>
+                <MousePointer size={14} className="text-[#5E1224]" />
+                <span>Interactive Mockup (Drag to Position)</span>
               </span>
 
               {(uploadedImage || customText) && (
@@ -361,12 +462,18 @@ export default function ProductDetailClient() {
                   onClick={handleResetDesign}
                   className="text-[11px] font-bold text-rose-700 hover:text-rose-900 flex items-center gap-1 bg-rose-50 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
                 >
-                  <RefreshCw size={12} /> Reset All
+                  <RefreshCw size={12} /> Reset Positions
                 </button>
               )}
             </div>
 
-            <div className="relative aspect-square sm:aspect-4/3 w-full rounded-3xl bg-[#F9F4EE] border border-[#EFE7DC] flex items-center justify-center p-4 sm:p-8 overflow-hidden shadow-inner select-none">
+            {/* STAGE CONTAINER: Click anywhere outside to deselect */}
+            <div 
+              ref={previewContainerRef}
+              onClick={() => setSelectedElement(null)}
+              className="relative aspect-square sm:aspect-4/3 w-full rounded-3xl bg-[#F9F4EE] border border-[#EFE7DC] flex items-center justify-center overflow-hidden shadow-inner select-none cursor-default"
+              style={{ touchAction: "none" }}
+            >
               
               {/* 1. Base Clean Product Mockup from /showimg/ */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -376,80 +483,210 @@ export default function ProductDetailClient() {
                 className="w-full h-full object-contain pointer-events-none select-none z-0"
               />
 
-              {/* 2. Print Zone Guide Area */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-10 sm:p-14 z-10">
-                <div className="relative w-44 h-44 sm:w-56 sm:h-56 border-2 border-dashed border-[#5E1224]/30 rounded-2xl flex items-center justify-center">
-                  
-                  {/* Uploaded User Photo with Scale, Position & Rotation */}
-                  {uploadedImage && (
-                    <div
-                      style={{
-                        transform: `translate(${imagePosX}px, ${imagePosY}px) scale(${imageScale}) rotate(${imageRotation}deg)`,
-                        transition: "transform 0.05s ease-out",
-                      }}
-                      className="w-32 h-32 sm:w-40 sm:h-40 rounded-xl overflow-hidden shadow-lg border border-white/80 shrink-0"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={uploadedImage}
-                        alt="User design"
-                        className="w-full h-full object-cover select-none"
-                      />
-                    </div>
-                  )}
+              {/* 2. FREEFORM DRAGGABLE USER PHOTO */}
+              {uploadedImage && (
+                <div
+                  onMouseDown={onPointerDownImage}
+                  onTouchStart={onPointerDownImage}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedElement("image");
+                    setCustomizeTab("upload");
+                  }}
+                  style={{
+                    position: "absolute",
+                    left: `${(0.5 + imgX) * 100}%`,
+                    top: `${(0.5 + imgY) * 100}%`,
+                    transform: `translate(-50%, -50%) scale(${imageScale}) rotate(${imageRotation}deg)`,
+                    zIndex: selectedElement === "image" ? 30 : 20,
+                    cursor: isDragging && dragRef.current?.target === "image" ? "grabbing" : "grab",
+                  }}
+                  className={`group transition-shadow select-none ${
+                    selectedElement === "image"
+                      ? "ring-2 ring-[#5E1224] ring-offset-2 rounded-xl shadow-2xl"
+                      : "hover:ring-1 hover:ring-[#5E1224]/50 rounded-xl"
+                  }`}
+                >
+                  <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-xl overflow-hidden shadow-lg border border-white/90 bg-white/10 backdrop-blur-xs flex items-center justify-center">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={uploadedImage}
+                      alt="User design"
+                      className="w-full h-full object-cover pointer-events-none select-none"
+                    />
+                  </div>
 
-                  {/* Custom Text with chosen font, size, color and vertical position */}
-                  {customText && (
-                    <div
-                      style={{
-                        transform: `translateY(${uploadedImage ? 50 + textPosY : textPosY}px)`,
-                        transition: "transform 0.05s ease-out",
-                      }}
-                      className="absolute inset-x-0 text-center pointer-events-none px-2"
-                    >
-                      <p
-                        style={{
-                          color: textColor,
-                          fontFamily: getFontFamilyCss(),
-                          fontSize: `${fontSize}px`,
+                  {/* Active Selection Floating Badge */}
+                  {selectedElement === "image" && (
+                    <div className="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-[#221518] text-white px-2 py-1 rounded-lg text-[10px] font-bold shadow-lg pointer-events-auto whitespace-nowrap z-40">
+                      <span className="text-amber-300">Photo Active</span>
+                      <span className="text-gray-400">•</span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setImageScale((s) => Math.min(3.0, Number((s + 0.15).toFixed(2))));
                         }}
-                        className="font-bold drop-shadow-md leading-tight break-words select-none"
+                        className="p-0.5 hover:text-amber-300"
+                        title="Zoom in"
                       >
-                        {customText}
-                      </p>
+                        +
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setImageScale((s) => Math.max(0.2, Number((s - 0.15).toFixed(2))));
+                        }}
+                        className="p-0.5 hover:text-amber-300"
+                        title="Zoom out"
+                      >
+                        -
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setImageRotation((r) => (r + 45) % 360);
+                        }}
+                        className="p-0.5 hover:text-amber-300"
+                        title="Rotate"
+                      >
+                        <RotateCw size={10} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleRemoveImage}
+                        className="p-0.5 hover:text-rose-400 text-rose-300 ml-0.5"
+                        title="Delete"
+                      >
+                        <Trash2 size={10} />
+                      </button>
                     </div>
                   )}
-
-                  {/* Guide Placeholder when nothing is added yet */}
-                  {!uploadedImage && !customText && (
-                    <div className="text-center p-3 space-y-1">
-                      <p className="font-serif italic text-sm sm:text-base font-bold text-[#5E1224]/70">
-                        ✨ Your Design Here ✨
-                      </p>
-                      <p className="text-[10px] text-[#736B6D]">
-                        Upload photo or type message below
-                      </p>
-                    </div>
-                  )}
-
                 </div>
+              )}
+
+              {/* 3. FREEFORM DRAGGABLE CUSTOM TEXT */}
+              {customText && (
+                <div
+                  onMouseDown={onPointerDownText}
+                  onTouchStart={onPointerDownText}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedElement("text");
+                    setCustomizeTab("text");
+                  }}
+                  style={{
+                    position: "absolute",
+                    left: `${(0.5 + textX) * 100}%`,
+                    top: `${(0.5 + textY) * 100}%`,
+                    transform: `translate(-50%, -50%) rotate(${textRotation}deg)`,
+                    zIndex: selectedElement === "text" ? 35 : 25,
+                    cursor: isDragging && dragRef.current?.target === "text" ? "grabbing" : "grab",
+                  }}
+                  className={`group transition-shadow select-none px-3 py-1.5 ${
+                    selectedElement === "text"
+                      ? "ring-2 ring-[#5E1224] ring-offset-2 rounded-xl bg-white/40 backdrop-blur-xs shadow-lg"
+                      : "hover:ring-1 hover:ring-[#5E1224]/50 rounded-xl"
+                  }`}
+                >
+                  <p
+                    style={{
+                      color: textColor,
+                      fontFamily: getFontFamilyCss(),
+                      fontSize: `${fontSize}px`,
+                    }}
+                    className="font-bold drop-shadow-md leading-tight text-center whitespace-nowrap select-none pointer-events-none"
+                  >
+                    {customText}
+                  </p>
+
+                  {/* Active Selection Floating Badge for Text */}
+                  {selectedElement === "text" && (
+                    <div className="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-[#221518] text-white px-2 py-1 rounded-lg text-[10px] font-bold shadow-lg pointer-events-auto whitespace-nowrap z-40">
+                      <span className="text-amber-300">Text Active</span>
+                      <span className="text-gray-400">•</span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setFontSize((s) => Math.min(48, s + 2));
+                        }}
+                        className="p-0.5 hover:text-amber-300"
+                        title="Bigger text"
+                      >
+                        A+
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setFontSize((s) => Math.max(12, s - 2));
+                        }}
+                        className="p-0.5 hover:text-amber-300"
+                        title="Smaller text"
+                      >
+                        A-
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCustomText("");
+                          setSelectedElement(null);
+                        }}
+                        className="p-0.5 hover:text-rose-400 text-rose-300 ml-0.5"
+                        title="Delete"
+                      >
+                        <Trash2 size={10} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 4. Empty State Placeholder when nothing is added */}
+              {!uploadedImage && !customText && (
+                <div 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute inset-0 flex flex-col items-center justify-center z-10 cursor-pointer p-6 group"
+                >
+                  <div className="bg-white/85 backdrop-blur-md border border-[#EFE7DC] group-hover:border-[#5E1224] rounded-2xl p-4 sm:p-5 text-center shadow-lg transition-transform group-hover:scale-105 max-w-xs space-y-2">
+                    <div className="w-10 h-10 rounded-full bg-rose-50 border border-rose-200 text-[#5E1224] flex items-center justify-center mx-auto">
+                      <Upload size={20} />
+                    </div>
+                    <div>
+                      <p className="font-serif font-bold text-sm text-[#221518]">
+                        Click to Upload Photo or Add Text
+                      </p>
+                      <p className="text-[11px] text-[#736B6D] mt-0.5">
+                        Free placement anywhere on the product
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Freeform Stage Status Badge */}
+              <div className="absolute bottom-3 right-3 bg-white/90 backdrop-blur-xs text-[10px] font-bold text-[#5E1224] px-2.5 py-1 rounded-full border border-[#EFE7DC] shadow-xs pointer-events-none">
+                ✨ Freeform Mode • Drag Anywhere
               </div>
 
-              {/* Print Zone Badge */}
-              <div className="absolute bottom-3 right-3 bg-white/90 backdrop-blur-xs text-[10px] font-bold text-[#5E1224] px-2.5 py-1 rounded-full border border-[#EFE7DC] shadow-xs pointer-events-none">
-                3D Live Mockup • Clean View
-              </div>
             </div>
 
             <p className="text-[11px] text-[#736B6D] italic text-center">
-              💡 Tip: Use sliders below to adjust photo size, position, and customize font color.
+              🖐️ Click and drag the photo or text directly on the product to position freely!
             </p>
           </div>
 
-          {/* Toggle Tabs: [ 📷 Upload Design ] | [ ✍️ Add Text ] */}
+          {/* Toggle Tabs: [ 📷 Photo Tools ] | [ ✍️ Text Tools ] */}
           <div className="grid grid-cols-2 gap-2 bg-[#F5ECE1] p-1.5 rounded-2xl">
             <button
-              onClick={() => setCustomizeTab("upload")}
+              onClick={() => {
+                setCustomizeTab("upload");
+                if (uploadedImage) setSelectedElement("image");
+              }}
               className={`py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
                 customizeTab === "upload"
                   ? "bg-[#5E1224] text-white shadow-xs"
@@ -457,10 +694,13 @@ export default function ProductDetailClient() {
               }`}
             >
               <Upload size={14} />
-              <span>Upload Photo</span>
+              <span>Photo Tools</span>
             </button>
             <button
-              onClick={() => setCustomizeTab("text")}
+              onClick={() => {
+                setCustomizeTab("text");
+                if (customText) setSelectedElement("text");
+              }}
               className={`py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
                 customizeTab === "text"
                   ? "bg-[#5E1224] text-white shadow-xs"
@@ -468,18 +708,18 @@ export default function ProductDetailClient() {
               }`}
             >
               <Type size={14} />
-              <span>Add Custom Text</span>
+              <span>Custom Text Tools</span>
             </button>
           </div>
 
-          {/* ── TAB 1: UPLOAD PHOTO CONTROLS ── */}
+          {/* ── TAB 1: UPLOAD & PHOTO POSITIONING CONTROLS ── */}
           {customizeTab === "upload" && (
             <div className="space-y-4">
               
               {/* Dropzone */}
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-[#D4B996] hover:border-[#5E1224] bg-[#FFFDF9] rounded-3xl p-6 text-center space-y-2 cursor-pointer transition-colors shadow-2xs group"
+                className="border-2 border-dashed border-[#D4B996] hover:border-[#5E1224] bg-[#FFFDF9] rounded-3xl p-5 text-center space-y-2 cursor-pointer transition-colors shadow-2xs group"
               >
                 <input
                   ref={fileInputRef}
@@ -488,21 +728,21 @@ export default function ProductDetailClient() {
                   className="hidden"
                   onChange={handleFileUpload}
                 />
-                <div className="w-12 h-12 rounded-full bg-[#F9F4EE] border border-[#EFE7DC] group-hover:scale-110 text-[#5E1224] flex items-center justify-center mx-auto transition-transform">
-                  <Upload size={22} />
+                <div className="w-10 h-10 rounded-full bg-[#F9F4EE] border border-[#EFE7DC] group-hover:scale-110 text-[#5E1224] flex items-center justify-center mx-auto transition-transform">
+                  <Upload size={20} />
                 </div>
                 <div>
                   <p className="text-sm font-bold text-[#221518]">
                     {uploadedImage ? "Click to Replace Photo" : "Upload Your Photo / Logo / Artwork"}
                   </p>
                   <p className="text-[11px] text-[#736B6D] mt-0.5">
-                    JPG, PNG, WEBP (Max. 15MB) • High Resolution Recommended
+                    JPG, PNG, WEBP (Max. 15MB) • Drag anywhere on product
                   </p>
                 </div>
                 {uploadedImage && (
                   <div className="pt-1 flex items-center justify-center gap-2">
                     <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
-                      <Check size={12} /> Photo Loaded on Mockup
+                      <Check size={12} /> Photo Ready on Mockup
                     </span>
                     <button
                       type="button"
@@ -515,12 +755,12 @@ export default function ProductDetailClient() {
                 )}
               </div>
 
-              {/* Photo Controls (Scale, Position, Rotation) */}
+              {/* Photo Sliders & Preset Placement */}
               {uploadedImage && (
                 <div className="bg-white rounded-3xl border border-[#EFE7DC] p-5 space-y-4 shadow-2xs">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-[#221518] flex items-center gap-1.5 pb-2 border-b border-[#EFE7DC]">
                     <Sliders size={14} className="text-[#5E1224]" />
-                    <span>Photo Adjustments</span>
+                    <span>Fine-Tune Photo Placement</span>
                   </h4>
 
                   {/* 1. Size / Zoom Slider */}
@@ -532,7 +772,7 @@ export default function ProductDetailClient() {
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => setImageScale((s) => Math.max(0.4, Number((s - 0.1).toFixed(2))))}
+                        onClick={() => setImageScale((s) => Math.max(0.2, Number((s - 0.1).toFixed(2))))}
                         className="p-1.5 rounded-lg bg-[#FAF7F2] border border-[#EFE7DC] hover:bg-[#EFE7DC] text-[#221518]"
                         title="Zoom out"
                       >
@@ -540,8 +780,8 @@ export default function ProductDetailClient() {
                       </button>
                       <input
                         type="range"
-                        min="0.4"
-                        max="2.0"
+                        min="0.2"
+                        max="3.0"
                         step="0.05"
                         value={imageScale}
                         onChange={(e) => setImageScale(parseFloat(e.target.value))}
@@ -549,7 +789,7 @@ export default function ProductDetailClient() {
                       />
                       <button
                         type="button"
-                        onClick={() => setImageScale((s) => Math.min(2.0, Number((s + 0.1).toFixed(2))))}
+                        onClick={() => setImageScale((s) => Math.min(3.0, Number((s + 0.1).toFixed(2))))}
                         className="p-1.5 rounded-lg bg-[#FAF7F2] border border-[#EFE7DC] hover:bg-[#EFE7DC] text-[#221518]"
                         title="Zoom in"
                       >
@@ -558,19 +798,20 @@ export default function ProductDetailClient() {
                     </div>
                   </div>
 
-                  {/* 2. Position Controls */}
+                  {/* 2. Position X & Y Sliders */}
                   <div className="grid grid-cols-2 gap-3 pt-1">
                     <div className="space-y-1">
                       <div className="flex justify-between text-xs">
                         <span className="font-semibold text-[#5C4F52]">Horizontal (X):</span>
-                        <span className="font-mono text-[11px] text-[#736B6D]">{imagePosX}px</span>
+                        <span className="font-mono text-[11px] text-[#736B6D]">{Math.round(imgX * 100)}%</span>
                       </div>
                       <input
                         type="range"
-                        min="-80"
-                        max="80"
-                        value={imagePosX}
-                        onChange={(e) => setImagePosX(parseInt(e.target.value))}
+                        min="-0.45"
+                        max="0.45"
+                        step="0.01"
+                        value={imgX}
+                        onChange={(e) => setImgX(parseFloat(e.target.value))}
                         className="w-full accent-[#5E1224] h-2 bg-[#FAF7F2] rounded-lg cursor-pointer"
                       />
                     </div>
@@ -578,20 +819,63 @@ export default function ProductDetailClient() {
                     <div className="space-y-1">
                       <div className="flex justify-between text-xs">
                         <span className="font-semibold text-[#5C4F52]">Vertical (Y):</span>
-                        <span className="font-mono text-[11px] text-[#736B6D]">{imagePosY}px</span>
+                        <span className="font-mono text-[11px] text-[#736B6D]">{Math.round(imgY * 100)}%</span>
                       </div>
                       <input
                         type="range"
-                        min="-80"
-                        max="80"
-                        value={imagePosY}
-                        onChange={(e) => setImagePosY(parseInt(e.target.value))}
+                        min="-0.45"
+                        max="0.45"
+                        step="0.01"
+                        value={imgY}
+                        onChange={(e) => setImgY(parseFloat(e.target.value))}
                         className="w-full accent-[#5E1224] h-2 bg-[#FAF7F2] rounded-lg cursor-pointer"
                       />
                     </div>
                   </div>
 
-                  {/* 3. Rotation Slider & Quick Actions */}
+                  {/* 3. Quick Placement Buttons */}
+                  <div className="space-y-1.5 pt-1">
+                    <span className="text-[11px] font-semibold text-[#736B6D] block">Quick Alignment:</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => { setImgX(0); setImgY(0); }}
+                        className="text-xs font-semibold bg-[#FAF7F2] hover:bg-[#EFE7DC] border border-[#EFE7DC] px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                      >
+                        Center
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setImgX(-0.25); setImgY(0); }}
+                        className="text-xs font-semibold bg-[#FAF7F2] hover:bg-[#EFE7DC] border border-[#EFE7DC] px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                      >
+                        Left Face
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setImgX(0.25); setImgY(0); }}
+                        className="text-xs font-semibold bg-[#FAF7F2] hover:bg-[#EFE7DC] border border-[#EFE7DC] px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                      >
+                        Right Face
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setImgX(0); setImgY(-0.25); }}
+                        className="text-xs font-semibold bg-[#FAF7F2] hover:bg-[#EFE7DC] border border-[#EFE7DC] px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                      >
+                        Top
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setImgX(0); setImgY(0.25); }}
+                        className="text-xs font-semibold bg-[#FAF7F2] hover:bg-[#EFE7DC] border border-[#EFE7DC] px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                      >
+                        Bottom
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 4. Rotation Slider */}
                   <div className="flex items-center justify-between pt-2 border-t border-[#EFE7DC]/60 flex-wrap gap-2">
                     <div className="flex items-center gap-2">
                       <button
@@ -604,19 +888,19 @@ export default function ProductDetailClient() {
                       <button
                         type="button"
                         onClick={() => {
-                          setImagePosX(0);
-                          setImagePosY(0);
+                          setImgX(0);
+                          setImgY(0);
                           setImageScale(1);
                           setImageRotation(0);
                         }}
                         className="text-xs font-semibold text-[#736B6D] hover:text-[#5E1224] bg-[#FAF7F2] border border-[#EFE7DC] px-3 py-1.5 rounded-xl transition-colors"
                       >
-                        Center Reset
+                        Reset All
                       </button>
                     </div>
 
-                    <span className="text-[11px] text-emerald-700 font-bold bg-emerald-50 px-2 py-1 rounded-md border border-emerald-200">
-                      ✓ Ready for Print
+                    <span className="text-[11px] text-emerald-700 font-bold bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
+                      ✓ High Res Print Ready
                     </span>
                   </div>
 
@@ -626,7 +910,7 @@ export default function ProductDetailClient() {
             </div>
           )}
 
-          {/* ── TAB 2: ADD TEXT CONTROLS ── */}
+          {/* ── TAB 2: ADD & POSITION CUSTOM TEXT ── */}
           {customizeTab === "text" && (
             <div className="bg-white rounded-3xl border border-[#EFE7DC] p-5 space-y-4 shadow-2xs">
               
@@ -639,14 +923,20 @@ export default function ProductDetailClient() {
                   <input
                     type="text"
                     value={customText}
-                    onChange={(e) => setCustomText(e.target.value)}
+                    onChange={(e) => {
+                      setCustomText(e.target.value);
+                      setSelectedElement("text");
+                    }}
                     placeholder="e.g. Rahul & Sneha ❤️"
                     className="w-full bg-[#FAF7F2] text-sm font-semibold text-[#221518] rounded-xl px-4 py-3 outline-none border border-[#EFE7DC] focus:border-[#5E1224] pr-8"
                   />
                   {customText && (
                     <button
                       type="button"
-                      onClick={() => setCustomText("")}
+                      onClick={() => {
+                        setCustomText("");
+                        setSelectedElement(null);
+                      }}
                       className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 p-1"
                     >
                       ✕
@@ -663,7 +953,10 @@ export default function ProductDetailClient() {
                     <button
                       key={sug}
                       type="button"
-                      onClick={() => setCustomText(sug)}
+                      onClick={() => {
+                        setCustomText(sug);
+                        setSelectedElement("text");
+                      }}
                       className="text-[11px] font-semibold bg-[#FAF7F2] hover:bg-rose-50 hover:text-[#5E1224] border border-[#EFE7DC] hover:border-rose-200 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
                     >
                       {sug}
@@ -755,8 +1048,8 @@ export default function ProductDetailClient() {
                 </div>
               </div>
 
-              {/* Font Size & Vertical Position Sliders */}
-              <div className="grid grid-cols-2 gap-3 pt-1">
+              {/* Font Size & Position Sliders */}
+              <div className="space-y-3 pt-1">
                 <div className="space-y-1">
                   <div className="flex justify-between text-xs">
                     <span className="font-semibold text-[#5C4F52]">Font Size:</span>
@@ -764,27 +1057,46 @@ export default function ProductDetailClient() {
                   </div>
                   <input
                     type="range"
-                    min="14"
-                    max="36"
+                    min="12"
+                    max="48"
                     value={fontSize}
                     onChange={(e) => setFontSize(parseInt(e.target.value))}
                     className="w-full accent-[#5E1224] h-2 bg-[#FAF7F2] rounded-lg cursor-pointer"
                   />
                 </div>
 
-                <div className="space-y-1">
-                  <div className="flex justify-between text-xs">
-                    <span className="font-semibold text-[#5C4F52]">Text Position (Y):</span>
-                    <span className="font-mono text-[11px] text-[#736B6D]">{textPosY}px</span>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="font-semibold text-[#5C4F52]">Horizontal (X):</span>
+                      <span className="font-mono text-[11px] text-[#736B6D]">{Math.round(textX * 100)}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="-0.45"
+                      max="0.45"
+                      step="0.01"
+                      value={textX}
+                      onChange={(e) => setTextX(parseFloat(e.target.value))}
+                      className="w-full accent-[#5E1224] h-2 bg-[#FAF7F2] rounded-lg cursor-pointer"
+                    />
                   </div>
-                  <input
-                    type="range"
-                    min="-60"
-                    max="60"
-                    value={textPosY}
-                    onChange={(e) => setTextPosY(parseInt(e.target.value))}
-                    className="w-full accent-[#5E1224] h-2 bg-[#FAF7F2] rounded-lg cursor-pointer"
-                  />
+
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="font-semibold text-[#5C4F52]">Vertical (Y):</span>
+                      <span className="font-mono text-[11px] text-[#736B6D]">{Math.round(textY * 100)}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="-0.45"
+                      max="0.45"
+                      step="0.01"
+                      value={textY}
+                      onChange={(e) => setTextY(parseFloat(e.target.value))}
+                      className="w-full accent-[#5E1224] h-2 bg-[#FAF7F2] rounded-lg cursor-pointer"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -806,7 +1118,7 @@ export default function ProductDetailClient() {
 
             <div className="flex items-center justify-between px-2 text-xs">
               <span className="text-[#736B6D]">
-                {uploadedImage || customText ? "✨ Custom mockup will be preserved in cart" : "No customization added yet"}
+                {uploadedImage || customText ? "✨ Custom placement will be preserved in cart" : "No customization added yet"}
               </span>
               <button
                 onClick={handleBuyNow}
