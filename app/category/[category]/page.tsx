@@ -18,19 +18,27 @@ export async function generateStaticParams() {
   ];
 }
 
+function getCategoryDisplayName(cat: string) {
+  const norm = cat.toLowerCase();
+  if (norm === "clothing" || norm === "t-shirts" || norm === "tshirt") return "T-Shirts";
+  if (norm === "mugs") return "Mugs";
+  if (norm === "bottles") return "Bottles";
+  return cat.charAt(0).toUpperCase() + cat.slice(1);
+}
+
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   const { category } = await params;
-  const title = category.charAt(0).toUpperCase() + category.slice(1);
+  const title = getCategoryDisplayName(category);
   return {
     title: `${title} — Cluster Studio Personalized Gifts`,
-    description: `Shop premium personalized ${category} customized with your photos, names, and quotes.`,
+    description: `Shop premium personalized ${title} customized with your photos, names, and quotes.`,
   };
 }
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { category } = await params;
   const categoryItems = getProductsByCategory(category);
-  const categoryTitle = category.charAt(0).toUpperCase() + category.slice(1);
+  const categoryTitle = getCategoryDisplayName(category);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
@@ -41,7 +49,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           Home
         </Link>
         <ChevronRight size={12} />
-        <span className="font-semibold text-[#221518] capitalize">
+        <span className="font-semibold text-[#221518]">
           {categoryTitle}
         </span>
       </nav>

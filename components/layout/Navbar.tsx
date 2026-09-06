@@ -81,7 +81,7 @@ export default function Navbar() {
       <header className="sticky top-0 z-50 bg-[#FFFDF9]/95 backdrop-blur-md border-b border-[#EFE7DC] shadow-2xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between gap-4">
           
-          {/* ── Left Side: Hamburger (Mobile) / Nav Links (Desktop) ── */}
+          {/* ── Left Side: Mobile Hamburger & Brand Logo ── */}
           <div className="flex items-center gap-3">
             {/* Mobile Hamburger Toggle */}
             <button
@@ -92,38 +92,43 @@ export default function Navbar() {
               <Menu size={24} strokeWidth={2} />
             </button>
 
-            {/* Desktop Navigation Links */}
-            <nav className="hidden lg:flex items-center gap-6 text-xs font-semibold uppercase tracking-wider text-[#4A3B3E]">
-              <Link
-                href="/"
-                className={`transition-colors hover:text-[#5E1224] ${
-                  pathname === "/" ? "text-[#5E1224] font-bold" : ""
-                }`}
-              >
-                Home
-              </Link>
-              {CATEGORIES.map((cat) => (
+            {/* Brand Logo */}
+            <BrandLogo variant="dark" size="md" />
+          </div>
+
+          {/* ── Center: Desktop Navigation Links ── */}
+          <nav className="hidden lg:flex items-center gap-8 text-xs font-semibold uppercase tracking-wider text-[#4A3B3E]">
+            <Link
+              href="/"
+              className={`transition-colors hover:text-[#5E1224] py-1 border-b-2 ${
+                pathname === "/" ? "text-[#5E1224] font-bold border-[#5E1224]" : "border-transparent"
+              }`}
+            >
+              Home
+            </Link>
+            {CATEGORIES.map((cat) => {
+              const isActive = pathname === `/category/${cat.slug}`;
+              return (
                 <Link
                   key={cat.slug}
                   href={`/category/${cat.slug}`}
-                  className="transition-colors hover:text-[#5E1224]"
+                  className={`transition-colors hover:text-[#5E1224] py-1 border-b-2 ${
+                    isActive ? "text-[#5E1224] font-bold border-[#5E1224]" : "border-transparent"
+                  }`}
                 >
                   {cat.name}
                 </Link>
-              ))}
-              <Link
-                href="/orders"
-                className="transition-colors hover:text-[#5E1224]"
-              >
-                Track Order
-              </Link>
-            </nav>
-          </div>
-
-          {/* ── Center: Brand Logo ── */}
-          <div className="flex-1 flex justify-center lg:flex-initial">
-            <BrandLogo variant="dark" size="md" />
-          </div>
+              );
+            })}
+            <Link
+              href="/orders"
+              className={`transition-colors hover:text-[#5E1224] py-1 border-b-2 ${
+                pathname === "/orders" ? "text-[#5E1224] font-bold border-[#5E1224]" : "border-transparent"
+              }`}
+            >
+              Track Order
+            </Link>
+          </nav>
 
           {/* ── Right Side: Search, Wishlist, User & Cart ── */}
           <div className="flex items-center gap-2 sm:gap-4">
