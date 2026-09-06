@@ -6,7 +6,8 @@ import Link from "next/link";
 import toast from "react-hot-toast";
 import { 
   Package, MapPin, CheckCircle, XCircle, Clock, 
-  Truck, ArrowLeft, ChevronLeft, ShieldCheck 
+  Truck, ArrowLeft, ChevronLeft, ShieldCheck,
+  Eye, Download, ZoomIn, ZoomOut, RotateCcw, Sparkles, Image as ImageIcon
 } from "lucide-react";
 
 interface OrderDetail {
@@ -47,6 +48,72 @@ export default function OrderDetailClient() {
 
   const effectiveOrderId = getEffectiveOrderId();
   const [order, setOrder] = useState<OrderDetail | null>(null);
+
+  // Lightbox Modal for Customer Artwork Inspection
+  const [previewImage, setPreviewImage] = useState<{
+    url: string;
+    title: string;
+    productName: string;
+    productId?: string;
+    customUrl?: string;
+    finalUrl?: string;
+    activeTab: "final" | "custom";
+  } | null>(null);
+  const [zoomScale, setZoomScale] = useState(1);
+
+  const downloadImage = async (imageUrl: string, filename: string) => {
+    try {
+      toast.loading("Preparing download...", { id: "dl-user" });
+
+      if (imageUrl && imageUrl.startsWith("data:")) {
+        const matches = imageUrl.match(/^data:(.+);base64,(.+)$/);
+        if (matches) {
+          const contentType = matches[1];
+          const byteCharacters = atob(matches[2]);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: contentType });
+          const blobUrl = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = blobUrl;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(blobUrl);
+          toast.success("Downloaded successfully!", { id: "dl-user" });
+          return;
+        }
+      }
+
+      try {
+        const res = await fetch(imageUrl);
+        if (res.ok) {
+          const blob = await res.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = blobUrl;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(blobUrl);
+          toast.success("Downloaded successfully!", { id: "dl-user" });
+          return;
+        }
+      } catch (e) {}
+
+      window.open(imageUrl, "_blank");
+      toast.success("Opened image in new tab!", { id: "dl-user" });
+    } catch (err) {
+      console.error("Download failed:", err);
+      window.open(imageUrl, "_blank");
+      toast.success("Opened image in new tab!", { id: "dl-user" });
+    }
+  };
 
   useEffect(() => {
     const targetId = effectiveOrderId || "CS123456";
@@ -119,6 +186,122 @@ export default function OrderDetailClient() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+      
+      {/* ── Interactive Customer Artwork Lightbox Modal ── */}
+      {previewImage && (
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-5 max-w-2xl w-full max-h-[92vh] flex flex-col shadow-2xl space-y-3">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-[#5E1224] block flex items-center gap-1">
+                  <Sparkles size={12} />
+                  <span>Personalized Design Viewer</span>
+                </span>
+                <h3 className="font-bold text-slate-900 text-sm sm:text-base">{previewImage.productName}</h3>
+                {previewImage.productId && (
+                  <span className="font-mono text-[11px] text-slate-500">Product ID: {previewImage.productId}</span>
+                )}
+              </div>
+              <button
+                onClick={() => { setPreviewImage(null); setZoomScale(1); }}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold flex items-center justify-center text-sm cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Design Tabs (If custom uploaded photo exists) */}
+            {previewImage.customUrl && previewImage.finalUrl && (
+              <div className="flex items-center gap-2 p-1 bg-slate-100 rounded-xl">
+                <button
+                  onClick={() => setPreviewImage(p => p ? { ...p, activeTab: "final", url: p.finalUrl! } : null)}
+                  className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    previewImage.activeTab === "final"
+                      ? "bg-white text-[#5E1224] shadow-xs"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  <Sparkles size={13} />
+                  <span>Final Customized Product</span>
+                </button>
+                <button
+                  onClick={() => setPreviewImage(p => p ? { ...p, activeTab: "custom", url: p.customUrl! } : null)}
+                  className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    previewImage.activeTab === "custom"
+                      ? "bg-white text-[#5E1224] shadow-xs"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  <ImageIcon size={13} />
+                  <span>Your Uploaded Photo</span>
+                </button>
+              </div>
+            )}
+
+            {/* Zoom Controls */}
+            <div className="flex items-center justify-between bg-slate-50 p-2 rounded-xl border border-slate-200 text-xs">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setZoomScale(s => Math.min(s + 0.25, 3))}
+                  className="bg-white hover:bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 shadow-2xs cursor-pointer"
+                >
+                  <ZoomIn size={14} /> Zoom In
+                </button>
+                <button
+                  onClick={() => setZoomScale(s => Math.max(s - 0.25, 0.5))}
+                  className="bg-white hover:bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 shadow-2xs cursor-pointer"
+                >
+                  <ZoomOut size={14} /> Zoom Out
+                </button>
+                <button
+                  onClick={() => setZoomScale(1)}
+                  className="bg-white hover:bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 shadow-2xs cursor-pointer"
+                >
+                  <RotateCcw size={13} /> Reset ({Math.round(zoomScale * 100)}%)
+                </button>
+              </div>
+
+              <span className="text-slate-500 font-medium text-[11px] hidden sm:inline">
+                {previewImage.activeTab === "final" ? "Composite Mockup" : "High-Res Upload"}
+              </span>
+            </div>
+
+            {/* Zoomable Image Container */}
+            <div className="relative flex-1 min-h-[320px] max-h-[50vh] bg-slate-900/90 rounded-2xl overflow-auto border border-slate-800 flex items-center justify-center p-4">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={previewImage.url}
+                alt={previewImage.title}
+                style={{ transform: `scale(${zoomScale})`, transition: "transform 0.15s ease-out" }}
+                className="max-h-[45vh] max-w-full object-contain rounded-lg shadow-xl"
+              />
+            </div>
+
+            <div className="pt-2 flex items-center justify-between">
+              <span className="text-xs text-slate-500">Pinch or zoom to inspect printing details.</span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setPreviewImage(null); setZoomScale(1); }}
+                  className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-50 cursor-pointer"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() =>
+                    downloadImage(
+                      previewImage.url,
+                      `${currentOrder.orderId}-${previewImage.activeTab === "final" ? "final-design" : "uploaded-photo"}.png`
+                    )
+                  }
+                  className="px-4 py-2 rounded-xl bg-[#5E1224] text-white text-xs font-bold flex items-center gap-1.5 shadow hover:bg-[#470A18] transition-colors cursor-pointer"
+                >
+                  <Download size={14} /> Download Design
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Back Button */}
       <Link
@@ -220,39 +403,130 @@ export default function OrderDetailClient() {
         </div>
       )}
 
-      {/* Items in Order */}
+      {/* Items in Order with Final Customized Image View */}
       <div className="bg-white rounded-3xl border border-[#EFE7DC] p-5 space-y-4 shadow-2xs">
-        <h2 className="font-serif font-bold text-sm uppercase tracking-wider text-[#221518] pb-2 border-b border-[#EFE7DC]">
-          Ordered Items ({currentOrder.items.length})
-        </h2>
-        <div className="space-y-3 divide-y divide-slate-100">
-          {currentOrder.items.map((item, i) => (
-            <div key={i} className="flex items-center gap-3 pt-3 first:pt-0">
-              <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-[#FAF7F2] border border-[#EFE7DC] shrink-0 flex items-center justify-center">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={item.finalImageUrl || item.productImage}
-                  alt={item.productName}
-                  className="w-full h-full object-contain p-1"
-                />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="font-bold text-xs sm:text-sm text-[#221518] truncate">{item.productName}</p>
-                  {item.productId && (
-                    <span className="font-mono text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded shrink-0">
-                      ID: {item.productId}
+        <div className="flex items-center justify-between pb-2 border-b border-[#EFE7DC]">
+          <h2 className="font-serif font-bold text-sm uppercase tracking-wider text-[#221518]">
+            Ordered Items ({currentOrder.items.length})
+          </h2>
+          <span className="text-[11px] text-[#736B6D]">Click on any item to view customized artwork</span>
+        </div>
+
+        <div className="space-y-4 divide-y divide-slate-100">
+          {currentOrder.items.map((item, i) => {
+            const displayImg = item.finalImageUrl || item.productImage;
+            return (
+              <div key={i} className="pt-4 first:pt-0 space-y-3">
+                <div className="flex items-start gap-3">
+                  {/* Thumbnail with Click to View Overlay */}
+                  <button
+                    onClick={() =>
+                      setPreviewImage({
+                        url: displayImg,
+                        title: `${item.productName} - Customized Mockup`,
+                        productName: item.productName,
+                        productId: item.productId,
+                        customUrl: item.customImageUrl,
+                        finalUrl: item.finalImageUrl,
+                        activeTab: "final",
+                      })
+                    }
+                    className="relative w-18 h-18 sm:w-20 sm:h-20 rounded-2xl overflow-hidden bg-[#FAF7F2] border border-[#EFE7DC] shrink-0 flex items-center justify-center group hover:border-[#5E1224] transition-colors cursor-pointer shadow-xs"
+                    title="Click to view customized design"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={displayImg}
+                      alt={item.productName}
+                      className="w-full h-full object-contain p-1 group-hover:scale-105 transition-transform"
+                    />
+                    <span className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-bold">
+                      <Eye size={16} />
                     </span>
-                  )}
+                  </button>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="font-bold text-xs sm:text-sm text-[#221518] truncate">{item.productName}</p>
+                      {item.productId && (
+                        <span className="font-mono text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded font-bold shrink-0">
+                          ID: {item.productId}
+                        </span>
+                      )}
+                    </div>
+
+                    {item.customImageUrl && (
+                      <p className="text-[11px] text-emerald-700 font-semibold mt-0.5 flex items-center gap-1">
+                        <span>✨</span>
+                        <span>Personalized with your custom photo</span>
+                      </p>
+                    )}
+                    <p className="text-[11px] text-[#736B6D] mt-0.5">
+                      Qty: <strong>{item.quantity}</strong> × {formatPrice(item.price)}
+                    </p>
+                    <span className="font-extrabold text-sm text-[#5E1224] mt-1 block">
+                      {formatPrice(item.price * item.quantity)}
+                    </span>
+                  </div>
                 </div>
-                {item.customImageUrl && (
-                  <p className="text-[11px] text-emerald-700 font-medium">✓ Custom photo attached</p>
-                )}
-                <p className="text-[11px] text-[#736B6D]">Qty: {item.quantity} × {formatPrice(item.price)}</p>
+
+                {/* Interactive Action Bar: View Final Design & View Uploaded Photo */}
+                <div className="flex flex-wrap items-center gap-2 pt-1 pl-1">
+                  <button
+                    onClick={() =>
+                      setPreviewImage({
+                        url: displayImg,
+                        title: `${item.productName} - Customized Mockup`,
+                        productName: item.productName,
+                        productId: item.productId,
+                        customUrl: item.customImageUrl,
+                        finalUrl: item.finalImageUrl,
+                        activeTab: "final",
+                      })
+                    }
+                    className="inline-flex items-center gap-1.5 bg-[#5E1224]/10 hover:bg-[#5E1224]/20 text-[#5E1224] border border-[#5E1224]/30 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs"
+                  >
+                    <Eye size={13} />
+                    <span>View Final Customized Design</span>
+                  </button>
+
+                  {item.customImageUrl && (
+                    <button
+                      onClick={() =>
+                        setPreviewImage({
+                          url: item.customImageUrl!,
+                          title: `${item.productName} - Your Uploaded Photo`,
+                          productName: item.productName,
+                          productId: item.productId,
+                          customUrl: item.customImageUrl,
+                          finalUrl: item.finalImageUrl,
+                          activeTab: "custom",
+                        })
+                      }
+                      className="inline-flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs"
+                    >
+                      <ImageIcon size={13} />
+                      <span>View Your Uploaded Photo</span>
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() =>
+                      downloadImage(
+                        item.finalImageUrl || displayImg,
+                        `${currentOrder.orderId}-item${i + 1}-final-design.png`
+                      )
+                    }
+                    className="inline-flex items-center gap-1 text-slate-500 hover:text-slate-800 text-xs font-semibold px-2 py-1.5 rounded-lg transition-colors cursor-pointer"
+                    title="Download design image"
+                  >
+                    <Download size={13} />
+                    <span>Download</span>
+                  </button>
+                </div>
               </div>
-              <span className="font-extrabold text-sm text-[#221518]">{formatPrice(item.price * item.quantity)}</span>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="border-t border-[#EFE7DC] pt-3 flex justify-between text-base font-extrabold text-[#221518]">

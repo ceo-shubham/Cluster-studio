@@ -271,18 +271,32 @@ export default function AdminOrderDetailClient() {
         }
       }
 
-      const res = await fetch(imageUrl);
-      if (!res.ok) throw new Error("Download failed");
-      const blob = await res.blob();
-      const blobUrl = URL.createObjectURL(blob);
+      try {
+        const res = await fetch(imageUrl);
+        if (res.ok) {
+          const blob = await res.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = blobUrl;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(blobUrl);
+          toast.success("Download complete!", { id: "dl" });
+          return;
+        }
+      } catch (e) {}
+
+      // Direct anchor download fallback
       const a = document.createElement("a");
-      a.href = blobUrl;
+      a.href = imageUrl;
       a.download = filename;
+      a.target = "_blank";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(blobUrl);
-      toast.success("Download complete!", { id: "dl" });
+      toast.success("Downloaded image!", { id: "dl" });
     } catch (err) {
       console.error("Download failed:", err);
       window.open(imageUrl, "_blank");
@@ -651,10 +665,10 @@ export default function AdminOrderDetailClient() {
                                   "original"
                                 )
                               }
-                              className="bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold px-3 py-2 rounded-lg transition-colors flex items-center gap-1 border border-blue-200"
+                              className="bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold px-3 py-2 rounded-lg transition-colors flex items-center gap-1 border border-blue-200 cursor-pointer shadow-2xs"
                             >
                               <Download size={13} />
-                              <span>Download</span>
+                              <span>Download User Photo</span>
                             </button>
                           </div>
                         )}
@@ -674,7 +688,7 @@ export default function AdminOrderDetailClient() {
                                   type: "final",
                                 })
                               }
-                              className="relative w-12 h-12 rounded-lg overflow-hidden bg-slate-100 shrink-0 border border-slate-200 hover:opacity-80 transition-opacity group flex items-center justify-center"
+                              className="relative w-12 h-12 rounded-lg overflow-hidden bg-slate-100 shrink-0 border border-slate-200 hover:opacity-80 transition-opacity group flex items-center justify-center cursor-pointer"
                               title="Click to zoom preview"
                             >
                               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -708,7 +722,7 @@ export default function AdminOrderDetailClient() {
                                   type: "final",
                                 })
                               }
-                              className="p-2 rounded-lg text-slate-600 hover:bg-slate-100 border border-slate-200"
+                              className="p-2 rounded-lg text-slate-600 hover:bg-slate-100 border border-slate-200 cursor-pointer"
                               title="View full size"
                             >
                               <Eye size={13} />
@@ -722,10 +736,10 @@ export default function AdminOrderDetailClient() {
                                   "final"
                                 )
                               }
-                              className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold px-3 py-2 rounded-lg transition-colors flex items-center gap-1 border border-emerald-200"
+                              className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold px-3 py-2 rounded-lg transition-colors flex items-center gap-1 border border-emerald-200 cursor-pointer shadow-2xs"
                             >
                               <Download size={13} />
-                              <span>Download</span>
+                              <span>Download Final Design</span>
                             </button>
                           </div>
                         )}
