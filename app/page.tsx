@@ -1,13 +1,56 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { 
-  ChevronRight, Star, Heart, Sparkles, ShieldCheck, 
+  ChevronRight, ChevronLeft, Star, Heart, Sparkles, ShieldCheck, 
   Truck, ArrowRight, Gift, Award, Lock, Edit3
 } from "lucide-react";
 import { products, customerReviews, getProductsByCategory } from "@/lib/products";
 import { Product } from "@/types";
 import ProductCard from "@/components/product/ProductCard";
+
+const HERO_SLIDES = [
+  {
+    tag: "Made for you, loved by all.",
+    titlePrefix: "Personalized",
+    titleMain: "Gifts that speak your story.",
+    subtitle: "Custom mugs, t-shirts, bottles and more – made just for you with high definition printing and premium materials.",
+    buttonText: "SHOP NOW",
+    buttonLink: "#products",
+    image: "/bannerimg/1 (1).jpeg",
+    alt: "Personalized White Mug",
+  },
+  {
+    tag: "Heat-Sensitive Magic",
+    titlePrefix: "Magic Mugs",
+    titleMain: "Watch memories reveal with hot tea or coffee.",
+    subtitle: "Pour hot liquid and watch your personalized photo magically appear right before your eyes.",
+    buttonText: "CUSTOMIZE MAGIC MUG",
+    buttonLink: "/product/1-4",
+    image: "/bannerimg/1 (4).jpeg",
+    alt: "Personalized Magic Mug",
+  },
+  {
+    tag: "Everyday Hydration",
+    titlePrefix: "Custom Bottles",
+    titleMain: "Keep hydration stylish, pure and leak-proof.",
+    subtitle: "Food-grade stainless steel sipper bottles customized with your name, gym quotes, and photos.",
+    buttonText: "EXPLORE BOTTLES",
+    buttonLink: "/category/bottles",
+    image: "/bannerimg/1 (5).jpeg",
+    alt: "Personalized Sipper Bottle",
+  },
+  {
+    tag: "Handcrafted With Love",
+    titlePrefix: "Couple & Combos",
+    titleMain: "Special gifts for every couple and anniversary.",
+    subtitle: "Matching heart-handle couple mugs, custom cushions and keepsake photo frames crafted for you.",
+    buttonText: "VIEW COMBOS",
+    buttonLink: "/category/combos",
+    image: "/bannerimg/1 (7).jpeg",
+    alt: "Couple Mugs and Combos",
+  },
+];
 
 const CATEGORY_PILLS = [
   { name: "Mugs", slug: "mugs", iconSvg: (
@@ -54,6 +97,24 @@ export default function HomePage() {
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [heroSlide, setHeroSlide] = useState(0);
 
+  // Auto-advance hero carousel every 4.5 seconds
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setHeroSlide((prev) => (prev + 1) % HERO_SLIDES.length);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, []);
+
+  const nextSlide = () => {
+    setHeroSlide((prev) => (prev + 1) % HERO_SLIDES.length);
+  };
+
+  const prevSlide = () => {
+    setHeroSlide((prev) => (prev - 1 + HERO_SLIDES.length) % HERO_SLIDES.length);
+  };
+
+  const currentSlide = HERO_SLIDES[heroSlide];
+
   // Best sellers items
   const bestSellers = products.filter((p) => p.isBestSeller).slice(0, 4);
 
@@ -66,59 +127,67 @@ export default function HomePage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-10 sm:space-y-14">
       
-      {/* ── 1. HERO SECTION ── */}
-      <section className="relative rounded-3xl bg-[#F9F4EE] border border-[#EFE7DC] overflow-hidden p-6 sm:p-12 shadow-xs">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+      {/* ── 1. HERO CAROUSEL SECTION ── */}
+      <section className="relative rounded-3xl bg-[#F9F4EE] border border-[#EFE7DC] overflow-hidden p-6 sm:p-12 shadow-xs group">
+        
+        {/* Left / Right Carousel Nav Arrows */}
+        <button
+          onClick={prevSlide}
+          className="absolute left-2.5 sm:left-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/80 hover:bg-white text-[#5E1224] flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-all z-20"
+          aria-label="Previous slide"
+        >
+          <ChevronLeft size={20} />
+        </button>
+
+        <button
+          onClick={nextSlide}
+          className="absolute right-2.5 sm:right-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/80 hover:bg-white text-[#5E1224] flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-all z-20"
+          aria-label="Next slide"
+        >
+          <ChevronRight size={20} />
+        </button>
+
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center min-h-[320px]">
           
           {/* Left Hero Content */}
-          <div className="md:col-span-6 space-y-4 sm:space-y-5 text-left z-10">
+          <div className="md:col-span-6 space-y-4 sm:space-y-5 text-left z-10 animate-in fade-in duration-300 key={heroSlide}">
             <span className="text-xs sm:text-sm font-medium text-[#736B6D] tracking-wide block">
-              Made for you, loved by all.
+              {currentSlide.tag}
             </span>
 
             <div className="space-y-2">
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-[#221518] leading-[1.15]">
-                <span className="text-[#5E1224] block">Personalized</span>
-                Gifts that speak your story.
+                <span className="text-[#5E1224] block">{currentSlide.titlePrefix}</span>
+                {currentSlide.titleMain}
               </h1>
               <div className="w-16 h-0.5 bg-[#5E1224] rounded-full" />
             </div>
 
             <p className="text-xs sm:text-sm text-[#5C4F52] leading-relaxed max-w-md">
-              Custom mugs, t-shirts, bottles and more – made just for you with high definition printing and premium materials.
+              {currentSlide.subtitle}
             </p>
 
             <div className="pt-2">
-              <a
-                href="#products"
+              <Link
+                href={currentSlide.buttonLink}
                 className="inline-flex items-center gap-2 bg-[#5E1224] hover:bg-[#470A18] text-white font-bold text-xs uppercase tracking-wider px-7 py-3.5 rounded-full shadow-md transition-transform active:scale-95"
               >
-                <span>SHOP NOW</span>
-              </a>
+                <span>{currentSlide.buttonText}</span>
+              </Link>
             </div>
           </div>
 
-          {/* Right Hero Image (Ceramic Mug on Wood Coaster with Cursive Text) */}
+          {/* Right Hero Image (Clean Banner Mockup) */}
           <div className="md:col-span-6 flex justify-center items-center relative">
             <div className="relative w-full max-w-sm sm:max-w-md aspect-4/3 sm:aspect-square flex items-center justify-center">
-              {/* Natural Shadow / Coaster Base */}
-              <div className="relative w-full h-full flex items-center justify-center">
+              <div className="relative w-full h-full flex items-center justify-center animate-in fade-in zoom-in-95 duration-300 key={heroSlide}">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="/bannerimg/1 (1).jpeg"
-                  alt="Personalized Mug Mockup"
-                  className="w-full h-full object-contain drop-shadow-xl"
+                  src={currentSlide.image}
+                  alt={currentSlide.alt}
+                  className="w-full h-full object-contain drop-shadow-xl rounded-2xl"
                   priority="true"
                 />
-
-                {/* Script Overlay 'Your Design Here ❤️' */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="text-center transform -rotate-3 select-none translate-x-2 translate-y-1">
-                    <p className="font-serif italic text-base sm:text-xl font-bold text-[#5E1224]/85 tracking-wide">
-                      Your Design<br />Here <span className="text-rose-600 not-italic">❤️</span>
-                    </p>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -126,28 +195,19 @@ export default function HomePage() {
         </div>
 
         {/* Hero Carousel Dots Indicator */}
-        <div className="flex items-center justify-center gap-2 pt-4 sm:pt-6">
-          <button
-            onClick={() => setHeroSlide(0)}
-            className={`w-2.5 h-2.5 rounded-full transition-all ${
-              heroSlide === 0 ? "bg-[#5E1224] w-6" : "bg-[#D4B996]/60 hover:bg-[#D4B996]"
-            }`}
-            aria-label="Slide 1"
-          />
-          <button
-            onClick={() => setHeroSlide(1)}
-            className={`w-2.5 h-2.5 rounded-full transition-all ${
-              heroSlide === 1 ? "bg-[#5E1224] w-6" : "bg-[#D4B996]/60 hover:bg-[#D4B996]"
-            }`}
-            aria-label="Slide 2"
-          />
-          <button
-            onClick={() => setHeroSlide(2)}
-            className={`w-2.5 h-2.5 rounded-full transition-all ${
-              heroSlide === 2 ? "bg-[#5E1224] w-6" : "bg-[#D4B996]/60 hover:bg-[#D4B996]"
-            }`}
-            aria-label="Slide 3"
-          />
+        <div className="flex items-center justify-center gap-2 pt-4 sm:pt-6 relative z-10">
+          {HERO_SLIDES.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setHeroSlide(idx)}
+              className={`h-2.5 rounded-full transition-all cursor-pointer ${
+                heroSlide === idx
+                  ? "bg-[#5E1224] w-7 shadow-xs"
+                  : "bg-[#D4B996]/50 hover:bg-[#D4B996] w-2.5"
+              }`}
+              aria-label={`Slide ${idx + 1}`}
+            />
+          ))}
         </div>
       </section>
 
@@ -274,7 +334,7 @@ export default function HomePage() {
           <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
             <button
               onClick={() => setActiveCategory("all")}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
                 activeCategory === "all"
                   ? "bg-[#5E1224] text-white shadow-xs"
                   : "bg-white text-[#221518] border border-[#EFE7DC] hover:border-[#5E1224]/30"
@@ -286,7 +346,7 @@ export default function HomePage() {
               <button
                 key={cat.slug}
                 onClick={() => setActiveCategory(cat.slug)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 ${
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 cursor-pointer ${
                   activeCategory === cat.slug
                     ? "bg-[#5E1224] text-white font-bold shadow-xs"
                     : "bg-white text-[#221518] border border-[#EFE7DC] hover:border-[#5E1224]/30"
