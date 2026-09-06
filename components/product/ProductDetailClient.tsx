@@ -43,7 +43,7 @@ export default function ProductDetailClient() {
   // Text State (Normalized -0.5 to +0.5 relative to preview center)
   const [customText, setCustomText] = useState("");
   const [textX, setTextX] = useState<number>(0);
-  const [textY, setTextY] = useState<number>(0.18);
+  const [textY, setTextY] = useState<number>(0.2);
   const [textColor, setTextColor] = useState("#5E1224");
   const [fontSize, setFontSize] = useState(20);
   const [textFontStyle, setTextFontStyle] = useState<"cursive" | "serif" | "sans" | "bold">("cursive");
@@ -111,7 +111,7 @@ export default function ProductDetailClient() {
       setImageScale(1);
       setImageRotation(0);
       setSelectedElement("image");
-      toast.success("Photo added! You can drag it anywhere on the product.");
+      toast.success("Photo added! Drag anywhere on the product.");
     };
     reader.readAsDataURL(file);
   };
@@ -132,7 +132,7 @@ export default function ProductDetailClient() {
     setImageRotation(0);
     setCustomText("");
     setTextX(0);
-    setTextY(0.18);
+    setTextY(0.2);
     setTextRotation(0);
     setSelectedElement(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -176,13 +176,13 @@ export default function ProductDetailClient() {
     const deltaNormY = (clientY - dragRef.current.startY) / rect.height;
 
     if (dragRef.current.target === "image") {
-      const newX = Math.max(-0.45, Math.min(0.45, dragRef.current.initialElemX + deltaNormX));
-      const newY = Math.max(-0.45, Math.min(0.45, dragRef.current.initialElemY + deltaNormY));
+      const newX = Math.max(-0.48, Math.min(0.48, dragRef.current.initialElemX + deltaNormX));
+      const newY = Math.max(-0.48, Math.min(0.48, dragRef.current.initialElemY + deltaNormY));
       setImgX(newX);
       setImgY(newY);
     } else if (dragRef.current.target === "text") {
-      const newX = Math.max(-0.45, Math.min(0.45, dragRef.current.initialElemX + deltaNormX));
-      const newY = Math.max(-0.45, Math.min(0.45, dragRef.current.initialElemY + deltaNormY));
+      const newX = Math.max(-0.48, Math.min(0.48, dragRef.current.initialElemX + deltaNormX));
+      const newY = Math.max(-0.48, Math.min(0.48, dragRef.current.initialElemY + deltaNormY));
       setTextX(newX);
       setTextY(newY);
     }
@@ -232,7 +232,7 @@ export default function ProductDetailClient() {
         // 1. Draw base product mockup (clean 800x800)
         ctx.drawImage(baseImg, 0, 0, 800, 800);
 
-        // 2. Draw user uploaded photo if present
+        // 2. Draw user uploaded photo borderless with exact natural aspect ratio
         if (uploadedImage) {
           const userImg = new window.Image();
           userImg.crossOrigin = "anonymous";
@@ -245,8 +245,8 @@ export default function ProductDetailClient() {
             ctx.translate(cx, cy);
             ctx.rotate((imageRotation * Math.PI) / 180);
 
-            // Proportional sizing
-            const baseDim = 320 * imageScale;
+            // Natural aspect ratio sizing
+            const baseDim = 280 * imageScale;
             const iw = userImg.naturalWidth || 200;
             const ih = userImg.naturalHeight || 200;
             const aspect = iw / ih;
@@ -305,8 +305,8 @@ export default function ProductDetailClient() {
     else if (textFontStyle === "bold") fontFam = "Impact, sans-serif";
 
     ctx.font = `bold ${Math.round(fontSize * 1.6)}px ${fontFam}`;
-    ctx.shadowColor = "rgba(0,0,0,0.3)";
-    ctx.shadowBlur = 6;
+    ctx.shadowColor = "rgba(0,0,0,0.25)";
+    ctx.shadowBlur = 4;
     ctx.fillText(customText, 0, 0);
     ctx.restore();
   };
@@ -337,7 +337,7 @@ export default function ProductDetailClient() {
           canvasState
         );
       }
-      toast.success(`${product.name} with your custom placement added to cart!`);
+      toast.success(`${product.name} with custom print added to cart!`);
       setIsCustomizing(false);
     } catch {
       for (let i = 0; i < quantity; i++) {
@@ -432,13 +432,13 @@ export default function ProductDetailClient() {
           <div className="flex items-center justify-between">
             <div>
               <div className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#5E1224] bg-rose-50 border border-rose-200 px-2.5 py-0.5 rounded-full mb-1">
-                <Sparkles size={12} /> Freeform Drag &amp; Drop Studio
+                <Sparkles size={12} /> Freeform Studio
               </div>
               <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#221518]">
                 Customize Your {product.name}
               </h1>
               <p className="text-xs text-[#736B6D] mt-0.5">
-                Drag photo and text freely anywhere on the product. No boundary restrictions.
+                Drag and position photo and text freely anywhere on the product. No frames or restrictions.
               </p>
             </div>
             <button
@@ -454,7 +454,7 @@ export default function ProductDetailClient() {
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-[#736B6D] flex items-center gap-1.5">
                 <MousePointer size={14} className="text-[#5E1224]" />
-                <span>Interactive Mockup (Drag to Position)</span>
+                <span>Live Freeform Preview</span>
               </span>
 
               {(uploadedImage || customText) && (
@@ -462,7 +462,7 @@ export default function ProductDetailClient() {
                   onClick={handleResetDesign}
                   className="text-[11px] font-bold text-rose-700 hover:text-rose-900 flex items-center gap-1 bg-rose-50 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
                 >
-                  <RefreshCw size={12} /> Reset Positions
+                  <RefreshCw size={12} /> Reset
                 </button>
               )}
             </div>
@@ -483,7 +483,7 @@ export default function ProductDetailClient() {
                 className="w-full h-full object-contain pointer-events-none select-none z-0"
               />
 
-              {/* 2. FREEFORM DRAGGABLE USER PHOTO */}
+              {/* 2. FREEFORM BORDERLESS USER PHOTO (NO BOX / NO FRAME) */}
               {uploadedImage && (
                 <div
                   onMouseDown={onPointerDownImage}
@@ -501,73 +501,69 @@ export default function ProductDetailClient() {
                     zIndex: selectedElement === "image" ? 30 : 20,
                     cursor: isDragging && dragRef.current?.target === "image" ? "grabbing" : "grab",
                   }}
-                  className={`group transition-shadow select-none ${
-                    selectedElement === "image"
-                      ? "ring-2 ring-[#5E1224] ring-offset-2 rounded-xl shadow-2xl"
-                      : "hover:ring-1 hover:ring-[#5E1224]/50 rounded-xl"
-                  }`}
+                  className="select-none inline-flex items-center justify-center relative p-1"
                 >
-                  <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-xl overflow-hidden shadow-lg border border-white/90 bg-white/10 backdrop-blur-xs flex items-center justify-center">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={uploadedImage}
-                      alt="User design"
-                      className="w-full h-full object-cover pointer-events-none select-none"
-                    />
-                  </div>
+                  {/* Pure Frameless Image with natural proportions */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={uploadedImage}
+                    alt="User design"
+                    className="max-w-[140px] sm:max-w-[200px] max-h-[140px] sm:max-h-[200px] w-auto h-auto object-contain pointer-events-none select-none drop-shadow-xs block"
+                  />
 
-                  {/* Active Selection Floating Badge */}
+                  {/* Subtle Selection Indicator with Mini Floating Controls */}
                   {selectedElement === "image" && (
-                    <div className="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-[#221518] text-white px-2 py-1 rounded-lg text-[10px] font-bold shadow-lg pointer-events-auto whitespace-nowrap z-40">
-                      <span className="text-amber-300">Photo Active</span>
-                      <span className="text-gray-400">•</span>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setImageScale((s) => Math.min(3.0, Number((s + 0.15).toFixed(2))));
-                        }}
-                        className="p-0.5 hover:text-amber-300"
-                        title="Zoom in"
-                      >
-                        +
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setImageScale((s) => Math.max(0.2, Number((s - 0.15).toFixed(2))));
-                        }}
-                        className="p-0.5 hover:text-amber-300"
-                        title="Zoom out"
-                      >
-                        -
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setImageRotation((r) => (r + 45) % 360);
-                        }}
-                        className="p-0.5 hover:text-amber-300"
-                        title="Rotate"
-                      >
-                        <RotateCw size={10} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleRemoveImage}
-                        className="p-0.5 hover:text-rose-400 text-rose-300 ml-0.5"
-                        title="Delete"
-                      >
-                        <Trash2 size={10} />
-                      </button>
-                    </div>
+                    <>
+                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-[#221518]/90 backdrop-blur-xs text-white px-2 py-0.5 rounded-full text-[10px] font-bold shadow-lg pointer-events-auto whitespace-nowrap z-40">
+                        <span className="text-amber-300">Photo</span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setImageScale((s) => Math.min(3.0, Number((s + 0.15).toFixed(2))));
+                          }}
+                          className="px-1 hover:text-amber-300 font-mono"
+                          title="Zoom in"
+                        >
+                          +
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setImageScale((s) => Math.max(0.2, Number((s - 0.15).toFixed(2))));
+                          }}
+                          className="px-1 hover:text-amber-300 font-mono"
+                          title="Zoom out"
+                        >
+                          -
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setImageRotation((r) => (r + 45) % 360);
+                          }}
+                          className="px-1 hover:text-amber-300"
+                          title="Rotate"
+                        >
+                          <RotateCw size={10} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleRemoveImage}
+                          className="px-1 hover:text-rose-400 text-rose-300"
+                          title="Delete"
+                        >
+                          <Trash2 size={10} />
+                        </button>
+                      </div>
+                    </>
                   )}
                 </div>
               )}
 
-              {/* 3. FREEFORM DRAGGABLE CUSTOM TEXT */}
+              {/* 3. FREEFORM BORDERLESS CUSTOM TEXT */}
               {customText && (
                 <div
                   onMouseDown={onPointerDownText}
@@ -585,11 +581,7 @@ export default function ProductDetailClient() {
                     zIndex: selectedElement === "text" ? 35 : 25,
                     cursor: isDragging && dragRef.current?.target === "text" ? "grabbing" : "grab",
                   }}
-                  className={`group transition-shadow select-none px-3 py-1.5 ${
-                    selectedElement === "text"
-                      ? "ring-2 ring-[#5E1224] ring-offset-2 rounded-xl bg-white/40 backdrop-blur-xs shadow-lg"
-                      : "hover:ring-1 hover:ring-[#5E1224]/50 rounded-xl"
-                  }`}
+                  className="select-none relative px-2 py-1"
                 >
                   <p
                     style={{
@@ -597,23 +589,22 @@ export default function ProductDetailClient() {
                       fontFamily: getFontFamilyCss(),
                       fontSize: `${fontSize}px`,
                     }}
-                    className="font-bold drop-shadow-md leading-tight text-center whitespace-nowrap select-none pointer-events-none"
+                    className="font-bold drop-shadow-xs leading-tight text-center whitespace-nowrap select-none pointer-events-none"
                   >
                     {customText}
                   </p>
 
-                  {/* Active Selection Floating Badge for Text */}
+                  {/* Active Selection Floating Controls for Text */}
                   {selectedElement === "text" && (
-                    <div className="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-[#221518] text-white px-2 py-1 rounded-lg text-[10px] font-bold shadow-lg pointer-events-auto whitespace-nowrap z-40">
-                      <span className="text-amber-300">Text Active</span>
-                      <span className="text-gray-400">•</span>
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-[#221518]/90 backdrop-blur-xs text-white px-2 py-0.5 rounded-full text-[10px] font-bold shadow-lg pointer-events-auto whitespace-nowrap z-40">
+                      <span className="text-amber-300">Text</span>
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           setFontSize((s) => Math.min(48, s + 2));
                         }}
-                        className="p-0.5 hover:text-amber-300"
+                        className="px-1 hover:text-amber-300"
                         title="Bigger text"
                       >
                         A+
@@ -624,7 +615,7 @@ export default function ProductDetailClient() {
                           e.stopPropagation();
                           setFontSize((s) => Math.max(12, s - 2));
                         }}
-                        className="p-0.5 hover:text-amber-300"
+                        className="px-1 hover:text-amber-300"
                         title="Smaller text"
                       >
                         A-
@@ -636,7 +627,7 @@ export default function ProductDetailClient() {
                           setCustomText("");
                           setSelectedElement(null);
                         }}
-                        className="p-0.5 hover:text-rose-400 text-rose-300 ml-0.5"
+                        className="px-1 hover:text-rose-400 text-rose-300"
                         title="Delete"
                       >
                         <Trash2 size={10} />
@@ -668,15 +659,10 @@ export default function ProductDetailClient() {
                 </div>
               )}
 
-              {/* Freeform Stage Status Badge */}
-              <div className="absolute bottom-3 right-3 bg-white/90 backdrop-blur-xs text-[10px] font-bold text-[#5E1224] px-2.5 py-1 rounded-full border border-[#EFE7DC] shadow-xs pointer-events-none">
-                ✨ Freeform Mode • Drag Anywhere
-              </div>
-
             </div>
 
             <p className="text-[11px] text-[#736B6D] italic text-center">
-              🖐️ Click and drag the photo or text directly on the product to position freely!
+              🖐️ Drag photo or text anywhere on the product mockup freely!
             </p>
           </div>
 
@@ -736,13 +722,13 @@ export default function ProductDetailClient() {
                     {uploadedImage ? "Click to Replace Photo" : "Upload Your Photo / Logo / Artwork"}
                   </p>
                   <p className="text-[11px] text-[#736B6D] mt-0.5">
-                    JPG, PNG, WEBP (Max. 15MB) • Drag anywhere on product
+                    JPG, PNG, WEBP (Max. 15MB) • Frameless Free Placement
                   </p>
                 </div>
                 {uploadedImage && (
                   <div className="pt-1 flex items-center justify-center gap-2">
                     <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
-                      <Check size={12} /> Photo Ready on Mockup
+                      <Check size={12} /> Photo Added to Mockup
                     </span>
                     <button
                       type="button"
@@ -760,13 +746,13 @@ export default function ProductDetailClient() {
                 <div className="bg-white rounded-3xl border border-[#EFE7DC] p-5 space-y-4 shadow-2xs">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-[#221518] flex items-center gap-1.5 pb-2 border-b border-[#EFE7DC]">
                     <Sliders size={14} className="text-[#5E1224]" />
-                    <span>Fine-Tune Photo Placement</span>
+                    <span>Photo Adjustments</span>
                   </h4>
 
                   {/* 1. Size / Zoom Slider */}
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-[#5C4F52]">Photo Size / Zoom:</span>
+                      <span className="font-semibold text-[#5C4F52]">Photo Size / Scale:</span>
                       <span className="font-mono font-bold text-[#221518]">{Math.round(imageScale * 100)}%</span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -807,8 +793,8 @@ export default function ProductDetailClient() {
                       </div>
                       <input
                         type="range"
-                        min="-0.45"
-                        max="0.45"
+                        min="-0.48"
+                        max="0.48"
                         step="0.01"
                         value={imgX}
                         onChange={(e) => setImgX(parseFloat(e.target.value))}
@@ -823,8 +809,8 @@ export default function ProductDetailClient() {
                       </div>
                       <input
                         type="range"
-                        min="-0.45"
-                        max="0.45"
+                        min="-0.48"
+                        max="0.48"
                         step="0.01"
                         value={imgY}
                         onChange={(e) => setImgY(parseFloat(e.target.value))}
@@ -846,14 +832,14 @@ export default function ProductDetailClient() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => { setImgX(-0.25); setImgY(0); }}
+                        onClick={() => { setImgX(-0.22); setImgY(0); }}
                         className="text-xs font-semibold bg-[#FAF7F2] hover:bg-[#EFE7DC] border border-[#EFE7DC] px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
                       >
                         Left Face
                       </button>
                       <button
                         type="button"
-                        onClick={() => { setImgX(0.25); setImgY(0); }}
+                        onClick={() => { setImgX(0.22); setImgY(0); }}
                         className="text-xs font-semibold bg-[#FAF7F2] hover:bg-[#EFE7DC] border border-[#EFE7DC] px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
                       >
                         Right Face
@@ -895,12 +881,12 @@ export default function ProductDetailClient() {
                         }}
                         className="text-xs font-semibold text-[#736B6D] hover:text-[#5E1224] bg-[#FAF7F2] border border-[#EFE7DC] px-3 py-1.5 rounded-xl transition-colors"
                       >
-                        Reset All
+                        Reset
                       </button>
                     </div>
 
                     <span className="text-[11px] text-emerald-700 font-bold bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
-                      ✓ High Res Print Ready
+                      ✓ Direct Print Ready
                     </span>
                   </div>
 
@@ -1073,8 +1059,8 @@ export default function ProductDetailClient() {
                     </div>
                     <input
                       type="range"
-                      min="-0.45"
-                      max="0.45"
+                      min="-0.48"
+                      max="0.48"
                       step="0.01"
                       value={textX}
                       onChange={(e) => setTextX(parseFloat(e.target.value))}
@@ -1089,8 +1075,8 @@ export default function ProductDetailClient() {
                     </div>
                     <input
                       type="range"
-                      min="-0.45"
-                      max="0.45"
+                      min="-0.48"
+                      max="0.48"
                       step="0.01"
                       value={textY}
                       onChange={(e) => setTextY(parseFloat(e.target.value))}
@@ -1118,7 +1104,7 @@ export default function ProductDetailClient() {
 
             <div className="flex items-center justify-between px-2 text-xs">
               <span className="text-[#736B6D]">
-                {uploadedImage || customText ? "✨ Custom placement will be preserved in cart" : "No customization added yet"}
+                {uploadedImage || customText ? "✨ Exact print placement will be saved in order" : "No customization added yet"}
               </span>
               <button
                 onClick={handleBuyNow}
