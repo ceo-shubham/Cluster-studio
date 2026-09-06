@@ -44,10 +44,14 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<"upi" | "card" | "netbanking" | "cod">("upi");
 
   // Calculations
+  const [appliedCoupon, setAppliedCoupon] = useState<string | null>("LOVE10");
   const subtotal = totalPrice();
   const shippingFee = subtotal > 499 ? 0 : 60;
-  const discount = 0;
-  const finalTotal = subtotal + shippingFee - discount;
+  let discount = 0;
+  if (appliedCoupon === "LOVE10") discount = Math.round(subtotal * 0.10);
+  else if (appliedCoupon === "FIRST50") discount = Math.min(50, subtotal);
+  else if (appliedCoupon === "FREESHIP") discount = shippingFee;
+  const finalTotal = Math.max(0, subtotal + shippingFee - discount);
 
   // Validate Address Step
   const handleAddressSubmit = (e: React.FormEvent) => {

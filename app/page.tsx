@@ -269,6 +269,68 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ── 3.5 SHOP BY OCCASION & GIFT FINDER ── */}
+      <section className="bg-[#F9F4EE] rounded-3xl border border-[#EFE7DC] p-5 sm:p-7 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-[#5E1224]">
+              Curated Collections
+            </span>
+            <h3 className="font-serif font-bold text-lg sm:text-xl text-[#221518]">
+              Personalized Gifts For Every Occasion
+            </h3>
+          </div>
+          <span className="text-xs text-[#736B6D]">Click an occasion to filter items</span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+          <button
+            onClick={() => setActiveCategory("all")}
+            className="bg-white hover:bg-rose-50 border border-[#EFE7DC] hover:border-[#5E1224] p-3 rounded-2xl text-left transition-all group cursor-pointer shadow-2xs"
+          >
+            <span className="text-xl block mb-1">🎂</span>
+            <p className="font-bold text-xs text-[#221518] group-hover:text-[#5E1224]">Birthday Gifts</p>
+            <p className="text-[10px] text-[#8C7A7E]">Mugs &amp; Cushions</p>
+          </button>
+
+          <button
+            onClick={() => setActiveCategory("mugs")}
+            className="bg-white hover:bg-rose-50 border border-[#EFE7DC] hover:border-[#5E1224] p-3 rounded-2xl text-left transition-all group cursor-pointer shadow-2xs"
+          >
+            <span className="text-xl block mb-1">💍</span>
+            <p className="font-bold text-xs text-[#221518] group-hover:text-[#5E1224]">Anniversary</p>
+            <p className="text-[10px] text-[#8C7A7E]">Couple Keepsakes</p>
+          </button>
+
+          <button
+            onClick={() => setActiveCategory("clothing")}
+            className="bg-white hover:bg-rose-50 border border-[#EFE7DC] hover:border-[#5E1224] p-3 rounded-2xl text-left transition-all group cursor-pointer shadow-2xs"
+          >
+            <span className="text-xl block mb-1">👕</span>
+            <p className="font-bold text-xs text-[#221518] group-hover:text-[#5E1224]">Custom Apparel</p>
+            <p className="text-[10px] text-[#8C7A7E]">T-Shirts &amp; Hoodies</p>
+          </button>
+
+          <button
+            onClick={() => setActiveCategory("bottles")}
+            className="bg-white hover:bg-rose-50 border border-[#EFE7DC] hover:border-[#5E1224] p-3 rounded-2xl text-left transition-all group cursor-pointer shadow-2xs"
+          >
+            <span className="text-xl block mb-1">💼</span>
+            <p className="font-bold text-xs text-[#221518] group-hover:text-[#5E1224]">Corporate / Gym</p>
+            <p className="text-[10px] text-[#8C7A7E]">Stainless Bottles</p>
+          </button>
+
+          <button
+            onClick={() => setActiveCategory("combos")}
+            className="bg-white hover:bg-rose-50 border border-[#EFE7DC] hover:border-[#5E1224] p-3 rounded-2xl text-left transition-all group cursor-pointer shadow-2xs"
+          >
+            <span className="text-xl block mb-1">🌟</span>
+            <p className="font-bold text-xs text-[#221518] group-hover:text-[#5E1224]">Luxury Combos</p>
+            <p className="text-[10px] text-[#8C7A7E]">Lamps &amp; Frames</p>
+          </button>
+        </div>
+      </section>
+
       {/* ── 4. TRUST BADGES STRIP ── */}
       <section className="bg-white rounded-2xl border border-[#EFE7DC] p-4 sm:p-6 shadow-2xs">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">

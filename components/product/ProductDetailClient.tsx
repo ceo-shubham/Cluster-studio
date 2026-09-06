@@ -13,6 +13,7 @@ import { formatPrice } from "@/lib/utils";
 import { useCartStore } from "@/store/cartStore";
 import { useWishlistStore } from "@/store/wishlistStore";
 import ProductCard from "@/components/product/ProductCard";
+import PincodeEstimator from "./PincodeEstimator";
 import toast from "react-hot-toast";
 
 export default function ProductDetailClient() {
@@ -485,6 +486,11 @@ export default function ProductDetailClient() {
                     <Plus size={14} />
                   </button>
                 </div>
+              </div>
+
+              {/* ── PINCODE DELIVERY ESTIMATOR ── */}
+              <div className="pt-2">
+                <PincodeEstimator />
               </div>
 
               {/* ── ACTION BUTTONS ── */}

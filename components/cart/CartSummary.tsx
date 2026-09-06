@@ -1,12 +1,17 @@
 "use client";
+import { useState } from "react";
 import Link from "next/link";
-import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft, ShieldCheck } from "lucide-react";
+import { Trash2, Plus, Minus, ShoppingBag, Tag, Check, ArrowRight } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { formatPrice } from "@/lib/utils";
+import toast from "react-hot-toast";
 
 export default function CartSummary() {
   const { items, removeItem, updateQuantity, totalPrice } = useCartStore();
   const totalItemsCount = items.reduce((s, i) => s + i.quantity, 0);
+
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<string | null>("LOVE10");
 
   if (items.length === 0) {
     return (
@@ -30,8 +35,27 @@ export default function CartSummary() {
 
   const subtotal = totalPrice();
   const shippingFee = subtotal > 499 ? 0 : 60;
-  const discount = 0;
-  const finalTotal = subtotal + shippingFee - discount;
+  
+  // Calculate discount based on applied promo
+  let discount = 0;
+  if (appliedCoupon === "LOVE10") discount = Math.round(subtotal * 0.10);
+  else if (appliedCoupon === "FIRST50") discount = Math.min(50, subtotal);
+  else if (appliedCoupon === "FREESHIP") discount = shippingFee;
+
+  const finalTotal = Math.max(0, subtotal + shippingFee - discount);
+
+  const handleApplyCoupon = (codeToApply?: string) => {
+    const code = (codeToApply || couponCode).trim().toUpperCase();
+    if (!code) return;
+
+    if (code === "LOVE10" || code === "FIRST50" || code === "FREESHIP") {
+      setAppliedCoupon(code);
+      setCouponCode("");
+      toast.success(`🎉 Coupon ${code} applied successfully!`);
+    } else {
+      toast.error("Invalid coupon code. Try 'LOVE10' or 'FIRST50'");
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -106,6 +130,54 @@ export default function CartSummary() {
         ))}
       </div>
 
+      {/* ── PROMO COUPON CODE SECTION ── */}
+      <div className="bg-white rounded-3xl border border-[#EFE7DC] p-4 sm:p-5 space-y-3 shadow-2xs">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold uppercase tracking-wider text-[#221518] flex items-center gap-1.5">
+            <Tag size={14} className="text-[#5E1224]" />
+            <span>Apply Coupon Code</span>
+          </span>
+          {appliedCoupon && (
+            <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+              <Check size={12} /> {appliedCoupon} Applied!
+            </span>
+          )}
+        </div>
+
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Enter promo code (e.g. LOVE10)"
+            value={couponCode}
+            onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+            className="flex-1 bg-[#FAF7F2] text-xs font-bold uppercase tracking-wider text-[#221518] rounded-xl px-3.5 py-2.5 outline-none border border-[#EFE7DC] focus:border-[#5E1224]"
+          />
+          <button
+            onClick={() => handleApplyCoupon()}
+            className="bg-[#5E1224] hover:bg-[#470A18] text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-colors cursor-pointer"
+          >
+            Apply
+          </button>
+        </div>
+
+        {/* Quick Coupons Clickable */}
+        <div className="flex items-center gap-2 pt-1 flex-wrap text-[11px]">
+          <span className="text-[#8C7A7E]">Available:</span>
+          <button
+            onClick={() => handleApplyCoupon("LOVE10")}
+            className="font-mono font-bold bg-[#FAF7F2] hover:bg-rose-50 border border-dashed border-[#5E1224]/50 text-[#5E1224] px-2 py-0.5 rounded-md cursor-pointer"
+          >
+            LOVE10 (10% OFF)
+          </button>
+          <button
+            onClick={() => handleApplyCoupon("FIRST50")}
+            className="font-mono font-bold bg-[#FAF7F2] hover:bg-rose-50 border border-dashed border-[#5E1224]/50 text-[#5E1224] px-2 py-0.5 rounded-md cursor-pointer"
+          >
+            FIRST50 (₹50 OFF)
+          </button>
+        </div>
+      </div>
+
       {/* ── PRICE DETAILS SUMMARY ── */}
       <div className="bg-white rounded-3xl border border-[#EFE7DC] p-5 sm:p-6 space-y-3 shadow-2xs">
         <h3 className="font-serif font-bold text-sm uppercase tracking-wider text-[#221518] pb-2 border-b border-[#EFE7DC]">
@@ -125,10 +197,12 @@ export default function CartSummary() {
             </span>
           </div>
 
-          <div className="flex justify-between">
-            <span>Discount</span>
-            <span className="font-bold text-emerald-700">-₹{discount}</span>
-          </div>
+          {discount > 0 && (
+            <div className="flex justify-between text-emerald-700 font-bold">
+              <span>Coupon Discount ({appliedCoupon})</span>
+              <span>-₹{discount}</span>
+            </div>
+          )}
 
           <div className="pt-2 border-t border-[#EFE7DC] flex justify-between text-base font-extrabold text-[#221518]">
             <span className="font-serif">Total</span>
