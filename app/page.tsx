@@ -41,56 +41,55 @@ const HERO_SLIDES = [
     alt: "Personalized Sipper Bottle",
   },
   {
-    tag: "Handcrafted With Love",
-    titlePrefix: "Couple & Combos",
-    titleMain: "Special gifts for every couple and anniversary.",
-    subtitle: "Matching heart-handle couple mugs, custom cushions and keepsake photo frames crafted for you.",
-    buttonText: "VIEW COMBOS",
-    buttonLink: "/category/combos",
-    image: "/bannerimg/1 (7).jpeg",
-    alt: "Couple Mugs and Combos",
+    tag: "100% Cotton Bio-Washed",
+    titlePrefix: "Custom T-Shirts",
+    titleMain: "High-definition DTF prints that last forever.",
+    subtitle: "Premium breathable cotton t-shirts customized with your favorite artwork, quotes, and memories.",
+    buttonText: "EXPLORE T-SHIRTS",
+    buttonLink: "/category/clothing",
+    image: "/bannerimg/1 (3).jpeg",
+    alt: "Personalized T-Shirts",
   },
 ];
 
+// 3 Core Active Categories: Mugs, Bottles, T-Shirts
 const CATEGORY_PILLS = [
-  { name: "Mugs", slug: "mugs", iconSvg: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M17 8h1a4 4 0 1 1 0 8h-1" />
-      <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" />
-      <line x1="6" y1="2" x2="6" y2="4" />
-      <line x1="10" y1="2" x2="10" y2="4" />
-      <line x1="14" y1="2" x2="14" y2="4" />
-    </svg>
-  )},
-  { name: "Clothing", slug: "clothing", iconSvg: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z" />
-    </svg>
-  )},
-  { name: "Bottles", slug: "bottles", iconSvg: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M8 2h8v4H8z" />
-      <path d="M9 6v3L6 11v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V11l-3-2V6" />
-      <path d="M10 14h4" />
-    </svg>
-  )},
-  { name: "Keychains", slug: "keychains", iconSvg: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="7" r="4" />
-      <path d="M12 11v11" />
-      <path d="M12 17h3" />
-      <path d="M12 20h2" />
-    </svg>
-  )},
-  { name: "Combos", slug: "combos", iconSvg: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="8" width="18" height="13" rx="2" />
-      <path d="M12 8v13" />
-      <path d="M19 12H5" />
-      <path d="M12 8C12 8 8 3 5 5C2 7 8 8 12 8Z" />
-      <path d="M12 8C12 8 16 3 19 5C22 7 16 8 12 8Z" />
-    </svg>
-  )},
+  { 
+    name: "Mugs", 
+    slug: "mugs", 
+    count: "7+ Designs",
+    iconSvg: (
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 8h1a4 4 0 1 1 0 8h-1" />
+        <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" />
+        <line x1="6" y1="2" x2="6" y2="4" />
+        <line x1="10" y1="2" x2="10" y2="4" />
+        <line x1="14" y1="2" x2="14" y2="4" />
+      </svg>
+    )
+  },
+  { 
+    name: "Bottles", 
+    slug: "bottles", 
+    count: "Stainless Steel",
+    iconSvg: (
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M8 2h8v4H8z" />
+        <path d="M9 6v3L6 11v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V11l-3-2V6" />
+        <path d="M10 14h4" />
+      </svg>
+    )
+  },
+  { 
+    name: "T-Shirts", 
+    slug: "clothing", 
+    count: "100% Cotton",
+    iconSvg: (
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z" />
+      </svg>
+    )
+  },
 ];
 
 export default function HomePage() {
@@ -111,6 +110,15 @@ export default function HomePage() {
 
   const prevSlide = () => {
     setHeroSlide((prev) => (prev - 1 + HERO_SLIDES.length) % HERO_SLIDES.length);
+  };
+
+  const handleCategoryClick = (slug: string) => {
+    setActiveCategory(slug);
+    // Smooth scroll to catalog section so user sees the action immediately
+    const el = document.getElementById("products");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   const currentSlide = HERO_SLIDES[heroSlide];
@@ -211,34 +219,52 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── 2. CATEGORY CIRCLE ICONS BAR ── */}
+      {/* ── 2. ACTIVE CATEGORY CIRCLE BUTTONS (MUGS, BOTTLES, T-SHIRTS) ── */}
       <section className="space-y-4">
-        <div className="grid grid-cols-5 gap-2 sm:gap-6 text-center">
+        <div className="text-center space-y-1">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-[#5E1224]">
+            Select Your Custom Product
+          </span>
+          <h2 className="font-serif font-bold text-xl sm:text-2xl text-[#221518]">
+            Explore by Category
+          </h2>
+        </div>
+
+        {/* 3 Prominent Responsive Category Buttons */}
+        <div className="grid grid-cols-3 gap-3 sm:gap-8 max-w-2xl mx-auto text-center">
           {CATEGORY_PILLS.map((cat) => {
             const isSelected = activeCategory === cat.slug;
             return (
               <button
                 key={cat.slug}
-                onClick={() => setActiveCategory(isSelected ? "all" : cat.slug)}
+                onClick={() => handleCategoryClick(cat.slug)}
                 className="flex flex-col items-center group cursor-pointer"
               >
+                {/* Circle Button */}
                 <div
-                  className={`w-14 h-14 sm:w-18 sm:h-18 rounded-full border flex items-center justify-center transition-all duration-200 shadow-2xs group-hover:scale-105 active:scale-95 ${
+                  className={`w-18 h-18 sm:w-24 sm:h-24 rounded-full border-2 flex items-center justify-center transition-all duration-300 shadow-sm group-hover:scale-105 active:scale-95 ${
                     isSelected
-                      ? "bg-[#5E1224] text-white border-[#5E1224] shadow-md"
-                      : "bg-[#FBF8F4] text-[#5E1224] border-[#EFE7DC] group-hover:border-[#5E1224]/40"
+                      ? "bg-[#5E1224] text-white border-[#5E1224] shadow-lg ring-4 ring-[#5E1224]/20"
+                      : "bg-[#FAF7F2] text-[#5E1224] border-[#EFE7DC] group-hover:border-[#5E1224] group-hover:bg-white"
                   }`}
                 >
                   <div className="transform group-hover:scale-110 transition-transform">
                     {cat.iconSvg}
                   </div>
                 </div>
+
+                {/* Label */}
                 <span
-                  className={`text-xs font-semibold mt-2 transition-colors ${
-                    isSelected ? "text-[#5E1224] font-bold" : "text-[#221518] group-hover:text-[#5E1224]"
+                  className={`text-xs sm:text-sm font-bold mt-2.5 transition-colors ${
+                    isSelected ? "text-[#5E1224]" : "text-[#221518] group-hover:text-[#5E1224]"
                   }`}
                 >
                   {cat.name}
+                </span>
+
+                {/* Subtag */}
+                <span className="text-[10px] text-[#8C7A7E] font-medium hidden sm:block">
+                  {cat.count}
                 </span>
               </button>
             );
@@ -266,68 +292,6 @@ export default function HomePage() {
           {bestSellers.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
-        </div>
-      </section>
-
-      {/* ── 3.5 SHOP BY OCCASION & GIFT FINDER ── */}
-      <section className="bg-[#F9F4EE] rounded-3xl border border-[#EFE7DC] p-5 sm:p-7 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[#5E1224]">
-              Curated Collections
-            </span>
-            <h3 className="font-serif font-bold text-lg sm:text-xl text-[#221518]">
-              Personalized Gifts For Every Occasion
-            </h3>
-          </div>
-          <span className="text-xs text-[#736B6D]">Click an occasion to filter items</span>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-          <button
-            onClick={() => setActiveCategory("all")}
-            className="bg-white hover:bg-rose-50 border border-[#EFE7DC] hover:border-[#5E1224] p-3 rounded-2xl text-left transition-all group cursor-pointer shadow-2xs"
-          >
-            <span className="text-xl block mb-1">🎂</span>
-            <p className="font-bold text-xs text-[#221518] group-hover:text-[#5E1224]">Birthday Gifts</p>
-            <p className="text-[10px] text-[#8C7A7E]">Mugs &amp; Cushions</p>
-          </button>
-
-          <button
-            onClick={() => setActiveCategory("mugs")}
-            className="bg-white hover:bg-rose-50 border border-[#EFE7DC] hover:border-[#5E1224] p-3 rounded-2xl text-left transition-all group cursor-pointer shadow-2xs"
-          >
-            <span className="text-xl block mb-1">💍</span>
-            <p className="font-bold text-xs text-[#221518] group-hover:text-[#5E1224]">Anniversary</p>
-            <p className="text-[10px] text-[#8C7A7E]">Couple Keepsakes</p>
-          </button>
-
-          <button
-            onClick={() => setActiveCategory("clothing")}
-            className="bg-white hover:bg-rose-50 border border-[#EFE7DC] hover:border-[#5E1224] p-3 rounded-2xl text-left transition-all group cursor-pointer shadow-2xs"
-          >
-            <span className="text-xl block mb-1">👕</span>
-            <p className="font-bold text-xs text-[#221518] group-hover:text-[#5E1224]">Custom Apparel</p>
-            <p className="text-[10px] text-[#8C7A7E]">T-Shirts &amp; Hoodies</p>
-          </button>
-
-          <button
-            onClick={() => setActiveCategory("bottles")}
-            className="bg-white hover:bg-rose-50 border border-[#EFE7DC] hover:border-[#5E1224] p-3 rounded-2xl text-left transition-all group cursor-pointer shadow-2xs"
-          >
-            <span className="text-xl block mb-1">💼</span>
-            <p className="font-bold text-xs text-[#221518] group-hover:text-[#5E1224]">Corporate / Gym</p>
-            <p className="text-[10px] text-[#8C7A7E]">Stainless Bottles</p>
-          </button>
-
-          <button
-            onClick={() => setActiveCategory("combos")}
-            className="bg-white hover:bg-rose-50 border border-[#EFE7DC] hover:border-[#5E1224] p-3 rounded-2xl text-left transition-all group cursor-pointer shadow-2xs"
-          >
-            <span className="text-xl block mb-1">🌟</span>
-            <p className="font-bold text-xs text-[#221518] group-hover:text-[#5E1224]">Luxury Combos</p>
-            <p className="text-[10px] text-[#8C7A7E]">Lamps &amp; Frames</p>
-          </button>
         </div>
       </section>
 
@@ -385,7 +349,7 @@ export default function HomePage() {
             <h2 className="font-serif font-bold text-xl sm:text-2xl text-[#221518]">
               {activeCategory === "all"
                 ? "Explore All Personalized Gifts"
-                : `${activeCategory.toUpperCase()} Collection`}
+                : `${activeCategory === "clothing" ? "T-SHIRTS & HOODIES" : activeCategory.toUpperCase()} Collection`}
             </h2>
             <p className="text-xs text-[#736B6D] mt-0.5">
               Showing {catalogProducts.length} personalized gifts
@@ -396,7 +360,7 @@ export default function HomePage() {
           <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
             <button
               onClick={() => setActiveCategory("all")}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
+              className={`px-4 py-2 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
                 activeCategory === "all"
                   ? "bg-[#5E1224] text-white shadow-xs"
                   : "bg-white text-[#221518] border border-[#EFE7DC] hover:border-[#5E1224]/30"
@@ -408,7 +372,7 @@ export default function HomePage() {
               <button
                 key={cat.slug}
                 onClick={() => setActiveCategory(cat.slug)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 cursor-pointer ${
+                className={`px-4 py-2 rounded-full text-xs font-semibold transition-all shrink-0 cursor-pointer ${
                   activeCategory === cat.slug
                     ? "bg-[#5E1224] text-white font-bold shadow-xs"
                     : "bg-white text-[#221518] border border-[#EFE7DC] hover:border-[#5E1224]/30"

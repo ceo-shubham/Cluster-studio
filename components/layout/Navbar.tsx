@@ -16,10 +16,8 @@ import NavbarAuthSection from "./NavbarAuthSection";
 
 const CATEGORIES = [
   { name: "Mugs", slug: "mugs", icon: "☕" },
-  { name: "Clothing", slug: "clothing", icon: "👕" },
   { name: "Bottles", slug: "bottles", icon: "🍼" },
-  { name: "Keychains", slug: "keychains", icon: "🔑" },
-  { name: "Combos", slug: "combos", icon: "🎁" },
+  { name: "T-Shirts", slug: "clothing", icon: "👕" },
 ];
 
 export default function Navbar() {

@@ -90,23 +90,13 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/category/clothing" className="hover:text-white transition-colors">
-                  Clothing
-                </Link>
-              </li>
-              <li>
                 <Link href="/category/bottles" className="hover:text-white transition-colors">
                   Bottles
                 </Link>
               </li>
               <li>
-                <Link href="/category/keychains" className="hover:text-white transition-colors">
-                  Keychains
-                </Link>
-              </li>
-              <li>
-                <Link href="/category/combos" className="hover:text-white transition-colors">
-                  Combos
+                <Link href="/category/clothing" className="hover:text-white transition-colors">
+                  T-Shirts
                 </Link>
               </li>
               <li>
