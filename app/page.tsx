@@ -94,6 +94,7 @@ const CATEGORY_PILLS = [
 
 export default function HomePage() {
   const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [showAllBestSellers, setShowAllBestSellers] = useState<boolean>(false);
   const [heroSlide, setHeroSlide] = useState(0);
 
   // Auto-advance hero carousel every 4.5 seconds
@@ -113,27 +114,41 @@ export default function HomePage() {
   };
 
   const handleCategoryClick = (slug: string) => {
-    setActiveCategory(slug);
-    // Smooth scroll to catalog section so user sees the action immediately
-    const el = document.getElementById("products");
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth" });
+    if (activeCategory === slug) {
+      setActiveCategory("all");
+    } else {
+      setActiveCategory(slug);
     }
   };
 
   const currentSlide = HERO_SLIDES[heroSlide];
 
-  // Best sellers items
-  const bestSellers = products.filter((p) => p.isBestSeller).slice(0, 4);
-
-  // Filtered catalog
-  const catalogProducts =
+  // Products to display
+  const displayedProducts =
     activeCategory === "all"
-      ? products
+      ? showAllBestSellers
+        ? products
+        : products.filter((p) => p.isBestSeller).slice(0, 4)
       : getProductsByCategory(activeCategory);
 
+  const getSectionTitle = () => {
+    if (activeCategory === "mugs") return "Mugs Collection";
+    if (activeCategory === "bottles") return "Bottles Collection";
+    if (activeCategory === "clothing") return "T-Shirts & Apparel";
+    return showAllBestSellers ? "All Products" : "Best Sellers";
+  };
+
+  const getSectionSubtitle = () => {
+    if (activeCategory === "all") {
+      return showAllBestSellers
+        ? `Showing all ${products.length} personalized gifts`
+        : "Hand-crafted personalized items trending right now";
+    }
+    return `Showing ${displayedProducts.length} personalized gifts`;
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-10 sm:space-y-14">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-10 sm:space-y-12">
       
       {/* ── 1. HERO CAROUSEL SECTION ── */}
       <section className="relative rounded-3xl bg-[#F9F4EE] border border-[#EFE7DC] overflow-hidden p-6 sm:p-12 shadow-xs group">
@@ -141,7 +156,7 @@ export default function HomePage() {
         {/* Left / Right Carousel Nav Arrows */}
         <button
           onClick={prevSlide}
-          className="absolute left-2.5 sm:left-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/80 hover:bg-white text-[#5E1224] flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-all z-20"
+          className="absolute left-2.5 sm:left-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/80 hover:bg-white text-[#5E1224] flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-all z-20 cursor-pointer"
           aria-label="Previous slide"
         >
           <ChevronLeft size={20} />
@@ -149,7 +164,7 @@ export default function HomePage() {
 
         <button
           onClick={nextSlide}
-          className="absolute right-2.5 sm:right-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/80 hover:bg-white text-[#5E1224] flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-all z-20"
+          className="absolute right-2.5 sm:right-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/80 hover:bg-white text-[#5E1224] flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-all z-20 cursor-pointer"
           aria-label="Next slide"
         >
           <ChevronRight size={20} />
@@ -176,12 +191,17 @@ export default function HomePage() {
             </p>
 
             <div className="pt-2">
-              <Link
-                href={currentSlide.buttonLink}
-                className="inline-flex items-center gap-2 bg-[#5E1224] hover:bg-[#470A18] text-white font-bold text-xs uppercase tracking-wider px-7 py-3.5 rounded-full shadow-md transition-transform active:scale-95"
+              <button
+                onClick={() => {
+                  setActiveCategory("all");
+                  setShowAllBestSellers(true);
+                  const el = document.getElementById("catalog-section");
+                  if (el) el.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="inline-flex items-center gap-2 bg-[#5E1224] hover:bg-[#470A18] text-white font-bold text-xs uppercase tracking-wider px-7 py-3.5 rounded-full shadow-md transition-transform active:scale-95 cursor-pointer"
               >
                 <span>{currentSlide.buttonText}</span>
-              </Link>
+              </button>
             </div>
           </div>
 
@@ -272,24 +292,39 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── 3. BEST SELLERS SECTION (2x2 Grid on Mobile) ── */}
-      <section className="space-y-4">
+      {/* ── 3. PRODUCT CATALOG (DYNAMIC BEST SELLERS / CATEGORY) ── */}
+      <section id="catalog-section" className="space-y-4 pt-2">
         <div className="flex items-center justify-between">
-          <h2 className="font-serif font-bold text-xl sm:text-2xl text-[#221518]">
-            Best Sellers
-          </h2>
-          <a
-            href="#products"
-            className="text-xs sm:text-sm font-semibold text-[#5E1224] hover:underline flex items-center gap-1"
-          >
-            <span>View all</span>
-            <ChevronRight size={14} />
-          </a>
+          <div>
+            <h2 className="font-serif font-bold text-xl sm:text-2xl text-[#221518]">
+              {getSectionTitle()}
+            </h2>
+            <p className="text-xs text-[#736B6D] mt-0.5">
+              {getSectionSubtitle()}
+            </p>
+          </div>
+
+          {activeCategory === "all" ? (
+            <button
+              onClick={() => setShowAllBestSellers(!showAllBestSellers)}
+              className="text-xs sm:text-sm font-semibold text-[#5E1224] hover:underline flex items-center gap-1 cursor-pointer"
+            >
+              <span>{showAllBestSellers ? "Show Best Sellers" : "View all"}</span>
+              <ChevronRight size={14} />
+            </button>
+          ) : (
+            <button
+              onClick={() => setActiveCategory("all")}
+              className="text-xs font-bold text-[#5E1224] hover:underline bg-[#FAF7F2] px-3 py-1.5 rounded-full border border-[#EFE7DC] cursor-pointer"
+            >
+              ✕ Show All
+            </button>
+          )}
         </div>
 
-        {/* 2x2 Grid on Mobile / 4 Cols on Desktop */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-          {bestSellers.map((product) => (
+        {/* Product Grid: 2 Cols Mobile / 4 Cols Desktop */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
+          {displayedProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
@@ -339,94 +374,6 @@ export default function HomePage() {
             </div>
           </div>
 
-        </div>
-      </section>
-
-      {/* ── 5. ALL PRODUCTS CATALOG ── */}
-      <section id="products" className="space-y-6 pt-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h2 className="font-serif font-bold text-xl sm:text-2xl text-[#221518]">
-              {activeCategory === "all"
-                ? "Explore All Personalized Gifts"
-                : `${activeCategory === "clothing" ? "T-SHIRTS & HOODIES" : activeCategory.toUpperCase()} Collection`}
-            </h2>
-            <p className="text-xs text-[#736B6D] mt-0.5">
-              Showing {catalogProducts.length} personalized gifts
-            </p>
-          </div>
-
-          {/* Filter Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            <button
-              onClick={() => setActiveCategory("all")}
-              className={`px-4 py-2 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                activeCategory === "all"
-                  ? "bg-[#5E1224] text-white shadow-xs"
-                  : "bg-white text-[#221518] border border-[#EFE7DC] hover:border-[#5E1224]/30"
-              }`}
-            >
-              All Items
-            </button>
-            {CATEGORY_PILLS.map((cat) => (
-              <button
-                key={cat.slug}
-                onClick={() => setActiveCategory(cat.slug)}
-                className={`px-4 py-2 rounded-full text-xs font-semibold transition-all shrink-0 cursor-pointer ${
-                  activeCategory === cat.slug
-                    ? "bg-[#5E1224] text-white font-bold shadow-xs"
-                    : "bg-white text-[#221518] border border-[#EFE7DC] hover:border-[#5E1224]/30"
-                }`}
-              >
-                {cat.name}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Catalog Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
-          {catalogProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
-      </section>
-
-      {/* ── 6. REAL CUSTOMER REVIEWS ── */}
-      <section className="space-y-4 pt-4">
-        <div className="text-center space-y-1">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-[#5E1224]">
-            Testimonials
-          </span>
-          <h2 className="font-serif font-bold text-xl sm:text-2xl text-[#221518]">
-            Loved by 10,000+ Happy Customers
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {customerReviews.map((rev) => (
-            <div
-              key={rev.id}
-              className="bg-white rounded-2xl border border-[#EFE7DC] p-5 shadow-2xs space-y-3"
-            >
-              <div className="flex items-center gap-1 text-[#F59E0B]">
-                {[...Array(rev.rating)].map((_, i) => (
-                  <Star key={i} size={14} className="fill-[#F59E0B]" />
-                ))}
-              </div>
-
-              <p className="text-xs text-[#4A3B3E] italic leading-relaxed">
-                &ldquo;{rev.comment}&rdquo;
-              </p>
-
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
-                <span className="font-bold text-[#221518]">{rev.name}</span>
-                <span className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-semibold">
-                  Verified Buyer
-                </span>
-              </div>
-            </div>
-          ))}
         </div>
       </section>
 
