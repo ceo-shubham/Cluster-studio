@@ -1,134 +1,118 @@
-﻿"use client";
-import Image from "next/image";
+"use client";
 import Link from "next/link";
-import { Heart, Star, Sparkles, Pencil } from "lucide-react";
+import { Star, Plus, Heart } from "lucide-react";
 import { Product } from "@/types";
 import { formatPrice } from "@/lib/utils";
 import { useWishlistStore } from "@/store/wishlistStore";
-import toast from "react-hot-toast";
 
-interface Props {
+interface ProductCardProps {
   product: Product;
+  className?: string;
+  onQuickAdd?: (product: Product) => void;
 }
 
-export default function ProductCard({ product }: Props) {
-  const { isInWishlist, addItem, removeItem } = useWishlistStore();
+export default function ProductCard({
+  product,
+  className = "",
+  onQuickAdd,
+}: ProductCardProps) {
+  const { isInWishlist, addItem: addToWishlist, removeItem: removeFromWishlist } = useWishlistStore();
   const wishlisted = isInWishlist(product.id);
 
-  const handleWishlistToggle = (e: React.MouseEvent) => {
+  const toggleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (wishlisted) {
-      removeItem(product.id);
-      toast.success("Removed from wishlist");
+      removeFromWishlist(product.id);
     } else {
-      addItem(product);
-      toast.success("Added to wishlist ❤️");
+      addToWishlist(product);
+    }
+  };
+
+  const handlePlusClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onQuickAdd) {
+      onQuickAdd(product);
+    } else {
+      window.location.href = `/product/${product.id}`;
     }
   };
 
   return (
-    <div className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-amber-100/70 flex flex-col relative">
-      
-      {/* Top badges (Best seller / New) */}
-      <div className="absolute top-2.5 left-2.5 z-10 flex flex-col gap-1">
+    <Link
+      href={`/product/${product.id}`}
+      className={`group bg-white rounded-2xl border border-[#EFE7DC] shadow-2xs hover:shadow-md hover:border-[#5E1224]/30 transition-all flex flex-col overflow-hidden relative ${className}`}
+    >
+      {/* ── Image Container ── */}
+      <div className="relative aspect-square w-full bg-[#F9F4EE] overflow-hidden flex items-center justify-center p-3">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={product.cardImage || product.image}
+          alt={product.name}
+          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+          loading="lazy"
+        />
+
+        {/* Wishlist Heart Button */}
+        <button
+          onClick={toggleWishlist}
+          className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-white/80 backdrop-blur-xs hover:bg-white text-[#5E1224] flex items-center justify-center transition-transform active:scale-90 shadow-2xs z-10"
+          aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+        >
+          <Heart
+            size={14}
+            className={wishlisted ? "fill-[#5E1224] text-[#5E1224]" : "text-[#736B6D]"}
+          />
+        </button>
+
+        {/* Best Seller Tag if active */}
         {product.isBestSeller && (
-          <span className="bg-amber-400 text-gray-950 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md shadow-sm tracking-wide flex items-center gap-1">
-            <Sparkles size={10} /> BEST SELLER
-          </span>
-        )}
-        {product.isNewArrival && (
-          <span className="bg-[#670D1F] text-white text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md shadow-sm tracking-wide">
-            NEW
+          <span className="absolute top-2.5 left-2.5 bg-[#5E1224] text-white text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md shadow-2xs">
+            Best Seller
           </span>
         )}
       </div>
 
-      {/* Wishlist Heart Button */}
-      <button
-        onClick={handleWishlistToggle}
-        className="absolute top-2.5 right-2.5 z-10 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm shadow-md flex items-center justify-center text-gray-400 hover:text-rose-600 transition-colors group-hover:scale-105"
-        aria-label="Wishlist"
-      >
-        <Heart
-          size={16}
-          className={`transition-colors ${
-            wishlisted ? "fill-rose-600 text-rose-600" : "hover:text-rose-600"
-          }`}
-        />
-      </button>
-
-      {/* Image container */}
-      <Link
-        href={`/product/${product.id}`}
-        className="block relative overflow-hidden bg-gradient-to-b from-[#FDFBF9] to-[#F7F2EC] shrink-0 aspect-square"
-      >
-        <Image
-          src={product.cardImage || product.image}
-          alt={product.name}
-          fill
-          className="object-contain p-4 group-hover:scale-105 transition-transform duration-500"
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-        />
-      </Link>
-
-      {/* Card Content */}
-      <div className="p-3.5 flex flex-col gap-1.5 flex-1 justify-between">
+      {/* ── Card Content ── */}
+      <div className="p-3.5 flex flex-col flex-1 justify-between gap-2">
         <div>
-          {/* Category */}
-          <span className="text-[10px] font-bold text-[#670D1F]/80 uppercase tracking-wider block">
-            {product.category}
-          </span>
+          <h3 className="font-serif font-bold text-sm sm:text-base text-[#221518] line-clamp-1 group-hover:text-[#5E1224] transition-colors">
+            {product.name}
+          </h3>
 
-          {/* Title */}
-          <Link href={`/product/${product.id}`}>
-            <h3 className="font-bold text-gray-900 text-sm leading-tight line-clamp-1 hover:text-[#670D1F] transition-colors mt-0.5">
-              {product.name}
-            </h3>
-          </Link>
-
-          {/* Star rating */}
-          <div className="flex items-center gap-1 mt-1">
-            <div className="flex text-amber-400">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} size={12} className="fill-amber-400 text-amber-400" />
-              ))}
-            </div>
-            <span className="text-[11px] text-gray-400 font-medium ml-0.5">
-              ({product.reviewsCount ?? 0})
-            </span>
-          </div>
-        </div>
-
-        {/* Pricing & CTA */}
-        <div className="pt-2 border-t border-gray-100 flex items-center justify-between gap-2 mt-2">
-          <div>
+          {/* Price & Rating */}
+          <div className="flex items-center justify-between mt-1">
             <div className="flex items-baseline gap-1.5">
-              <span className="text-base font-extrabold text-[#670D1F]">
+              <span className="font-extrabold text-sm sm:text-base text-[#221518]">
                 {formatPrice(product.price)}
               </span>
-              {product.mrp && (
-                <span className="text-xs text-gray-400 line-through">
+              {product.mrp && product.mrp > product.price && (
+                <span className="text-[10px] text-[#8C7A7E] line-through">
                   {formatPrice(product.mrp)}
                 </span>
               )}
             </div>
-            {product.discount && (
-              <span className="text-[10px] font-bold text-emerald-600">
-                {product.discount}
-              </span>
-            )}
           </div>
 
-          <Link
-            href={`/product/${product.id}`}
-            className="flex items-center gap-1 bg-[#670D1F] hover:bg-[#520817] text-white text-xs font-semibold px-3 py-1.5 rounded-xl transition-all shadow-sm shrink-0 hover:shadow-md"
+          <div className="flex items-center gap-1 text-[11px] text-[#736B6D] mt-1">
+            <Star size={12} className="text-[#F59E0B] fill-[#F59E0B]" />
+            <span className="font-semibold text-[#221518]">{product.rating.toFixed(1)}</span>
+            <span>({product.reviewsCount})</span>
+          </div>
+        </div>
+
+        {/* Circular Maroon Plus Button (Bottom Right) */}
+        <div className="flex items-center justify-end pt-1">
+          <button
+            onClick={handlePlusClick}
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#5E1224] hover:bg-[#470A18] text-white flex items-center justify-center transition-transform active:scale-90 shadow-xs cursor-pointer"
+            aria-label={`Customize ${product.name}`}
           >
-            <Pencil size={11} />
-            <span>Customize</span>
-          </Link>
+            <Plus size={16} strokeWidth={2.5} />
+          </button>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }

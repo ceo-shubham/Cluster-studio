@@ -2,10 +2,12 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { formatPrice, formatDate, STATUS_COLORS } from "@/lib/utils";
-import Image from "next/image";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import { Package, MapPin, CheckCircle, XCircle, Clock, Truck, ArrowLeft } from "lucide-react";
+import { 
+  Package, MapPin, CheckCircle, XCircle, Clock, 
+  Truck, ArrowLeft, ChevronLeft, ShieldCheck 
+} from "lucide-react";
 
 interface OrderDetail {
   orderId: string;
@@ -40,17 +42,14 @@ export default function OrderDetailClient() {
       const searchParam = new URLSearchParams(window.location.search).get("id");
       if (searchParam) return searchParam;
     }
-    return "CS-839201";
+    return "CS123456";
   };
 
   const effectiveOrderId = getEffectiveOrderId();
   const [order, setOrder] = useState<OrderDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
-    const targetId = effectiveOrderId || "CS-839201";
+    const targetId = effectiveOrderId || "CS123456";
 
     // 1. Try immediate cached order from localStorage
     try {
@@ -58,7 +57,6 @@ export default function OrderDetailClient() {
       const found = localSaved.find((o: any) => o.orderId === targetId);
       if (found) {
         setOrder(found);
-        setLoading(false);
       }
     } catch (e) {}
 
@@ -70,102 +68,102 @@ export default function OrderDetailClient() {
           setOrder(data.order);
         }
       })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      .catch(() => {});
   }, [effectiveOrderId]);
 
-  const handleCancel = async () => {
-    if (!order) return;
-    setCancelling(true);
-    try {
-      const res = await fetch(`/api/orders/${order.orderId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "cancelled" }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Cancel failed");
-      setOrder((o) => o ? { ...o, status: "cancelled" } : null);
-      toast.success("Order cancelled successfully.");
-    } catch (err) {
-      toast.error((err as Error).message || "Could not cancel order.");
-    } finally {
-      setCancelling(false);
-      setShowConfirm(false);
-    }
-  };
-
   const currentOrder: OrderDetail = order || {
-    orderId: effectiveOrderId || "CS-839201",
+    orderId: effectiveOrderId || "CS123456",
     status: "processing",
     paymentStatus: "paid",
-    totalAmount: 349,
+    totalAmount: 658,
     createdAt: new Date().toISOString(),
     userName: "Customer",
     userEmail: "customer@clusterstudio.in",
     shippingAddress: {
       name: "Customer",
-      line1: "Flat 402, Sunshine Heights",
-      city: "Mumbai",
+      line1: "12, MG Road, Near Post Office",
+      city: "Pune",
       state: "Maharashtra",
-      pincode: "400053",
+      pincode: "411001",
       phone: "9876543210"
     },
     items: [
       {
-        productId: "1-4",
-        productName: "Magic Mug (Heat Sensitive)",
-        productImage: "/showimg/1%20(4).jpeg",
+        productId: "1-1",
+        productName: "White Mug (Customized)",
+        productImage: "/showimg/1 (1).jpeg",
         quantity: 1,
-        price: 349,
-        customImageUrl: "/showimg/1%20(1).jpeg",
-        finalImageUrl: "/bannerimg/1%20(4).jpeg"
+        price: 199,
+        customImageUrl: "/showimg/1 (1).jpeg",
+        finalImageUrl: "/bannerimg/1 (1).jpeg"
+      },
+      {
+        productId: "1-5",
+        productName: "Sipper Bottle (Customized)",
+        productImage: "/showimg/1 (5).jpeg",
+        quantity: 1,
+        price: 399,
+        customImageUrl: "/showimg/1 (5).jpeg",
+        finalImageUrl: "/bannerimg/1 (5).jpeg"
       }
     ]
   };
 
   const stepIndex = STEPS.indexOf(currentOrder.status);
-  const canCancel = ["pending", "confirmed"].includes(currentOrder.status);
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+      
+      {/* Back Button */}
+      <Link
+        href="/orders"
+        className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#736B6D] hover:text-[#5E1224] transition-colors"
+      >
+        <ChevronLeft size={16} />
+        <span>Back to My Orders</span>
+      </Link>
+
+      {/* Header Summary */}
+      <div className="bg-white rounded-3xl border border-[#EFE7DC] p-5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           {currentOrder.status === "cancelled" ? (
-            <XCircle size={28} className="text-rose-500" />
+            <XCircle size={28} className="text-rose-500 shrink-0" />
           ) : (
-            <CheckCircle size={28} className="text-emerald-600" />
+            <CheckCircle size={28} className="text-emerald-600 shrink-0" />
           )}
           <div>
-            <h1 className="text-xl sm:text-2xl font-serif font-bold text-gray-900">
+            <h1 className="text-xl font-serif font-bold text-[#221518]">
               {currentOrder.status === "cancelled" ? "Order Cancelled" : "Order Confirmed & In Progress"}
             </h1>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Order ID: <strong className="font-mono text-slate-800">#{currentOrder.orderId}</strong> · Placed on {formatDate(currentOrder.createdAt)}
+            <p className="text-xs text-[#736B6D] mt-0.5">
+              Order ID: <strong className="font-mono text-[#221518]">#{currentOrder.orderId}</strong> · Placed on {formatDate(currentOrder.createdAt)}
             </p>
           </div>
         </div>
 
-        <span className={`self-start sm:self-center px-3 py-1 rounded-full text-xs font-bold uppercase ${STATUS_COLORS[currentOrder.status] || "bg-amber-100 text-amber-800"}`}>
+        <span className="self-start sm:self-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-50 text-amber-800 border border-amber-200">
           {currentOrder.status}
         </span>
       </div>
 
-      {/* Status Track */}
+      {/* Live Fulfillment Timeline */}
       {currentOrder.status !== "cancelled" && (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6">
-          <h2 className="font-bold text-gray-800 mb-6 text-xs uppercase tracking-wider">Live Fulfillment Journey</h2>
-          <div className="flex items-center justify-between relative">
-            <div className="absolute top-4 left-4 right-4 h-0.5 bg-gray-200 z-0" />
+        <div className="bg-white rounded-3xl border border-[#EFE7DC] p-5 sm:p-6 shadow-2xs space-y-4">
+          <h2 className="font-bold text-xs uppercase tracking-wider text-[#221518]">
+            Fulfillment Journey
+          </h2>
+          <div className="flex items-center justify-between relative pt-2">
+            <div className="absolute top-6 left-6 right-6 h-0.5 bg-[#EFE7DC] z-0" />
             {STEPS.map((step, i) => (
               <div key={step} className="flex flex-col items-center gap-1.5 z-10 flex-1">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all ${
-                  i <= stepIndex ? "bg-[#670D1F] border-[#670D1F] text-white shadow-xs" : "bg-white border-gray-300 text-gray-400"
+                  i <= stepIndex
+                    ? "bg-[#5E1224] border-[#5E1224] text-white shadow-xs"
+                    : "bg-white border-[#EFE7DC] text-[#736B6D]"
                 }`}>
                   {i < stepIndex ? "✓" : i + 1}
                 </div>
-                <span className={`text-[11px] capitalize text-center ${i <= stepIndex ? "text-[#670D1F] font-bold" : "text-gray-400"}`}>
+                <span className={`text-[10px] capitalize text-center ${i <= stepIndex ? "text-[#5E1224] font-bold" : "text-[#736B6D]"}`}>
                   {step}
                 </span>
               </div>
@@ -174,97 +172,63 @@ export default function OrderDetailClient() {
         </div>
       )}
 
-      {/* Items */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4">
-        <h2 className="font-bold text-gray-900 text-sm uppercase tracking-wider">Items in this Order ({currentOrder.items.length})</h2>
+      {/* Items in Order */}
+      <div className="bg-white rounded-3xl border border-[#EFE7DC] p-5 space-y-4 shadow-2xs">
+        <h2 className="font-serif font-bold text-sm uppercase tracking-wider text-[#221518] pb-2 border-b border-[#EFE7DC]">
+          Ordered Items ({currentOrder.items.length})
+        </h2>
         <div className="space-y-3 divide-y divide-slate-100">
           {currentOrder.items.map((item, i) => (
-            <div key={i} className="flex items-center gap-4 pt-3 first:pt-0">
-              <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-slate-50 border border-slate-200 shrink-0">
+            <div key={i} className="flex items-center gap-3 pt-3 first:pt-0">
+              <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-[#FAF7F2] border border-[#EFE7DC] shrink-0 flex items-center justify-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={item.finalImageUrl || item.productImage} alt={item.productName} className="w-full h-full object-contain p-1" />
+                <img
+                  src={item.finalImageUrl || item.productImage}
+                  alt={item.productName}
+                  className="w-full h-full object-contain p-1"
+                />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-gray-900 text-sm truncate">{item.productName}</p>
-                {item.customImageUrl && <p className="text-xs text-emerald-600 font-medium">✓ Custom photo sublimation attached</p>}
-                <p className="text-xs text-gray-500">Qty: {item.quantity} × {formatPrice(item.price)}</p>
+                <p className="font-bold text-xs sm:text-sm text-[#221518] truncate">{item.productName}</p>
+                {item.customImageUrl && (
+                  <p className="text-[11px] text-emerald-700 font-medium">✓ Custom photo attached</p>
+                )}
+                <p className="text-[11px] text-[#736B6D]">Qty: {item.quantity} × {formatPrice(item.price)}</p>
               </div>
-              <span className="font-extrabold text-[#670D1F] text-sm">{formatPrice(item.price * item.quantity)}</span>
+              <span className="font-extrabold text-sm text-[#221518]">{formatPrice(item.price * item.quantity)}</span>
             </div>
           ))}
         </div>
 
-        <div className="border-t border-slate-100 pt-3 flex justify-between text-base font-extrabold text-gray-900">
-          <span>Grand Total</span>
-          <span className="text-[#670D1F]">{formatPrice(currentOrder.totalAmount)}</span>
+        <div className="border-t border-[#EFE7DC] pt-3 flex justify-between text-base font-extrabold text-[#221518]">
+          <span className="font-serif">Grand Total</span>
+          <span className="text-[#5E1224]">{formatPrice(currentOrder.totalAmount)}</span>
         </div>
       </div>
 
       {/* Shipping Address */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-2">
-        <h2 className="font-bold text-gray-900 text-sm flex items-center gap-2">
-          <MapPin size={16} className="text-[#670D1F]" /> Delivery Address
+      <div className="bg-white rounded-3xl border border-[#EFE7DC] p-5 space-y-2 shadow-2xs text-xs">
+        <h2 className="font-serif font-bold text-sm text-[#221518] flex items-center gap-2">
+          <MapPin size={16} className="text-[#5E1224]" /> Delivery Address
         </h2>
-        <div className="text-xs text-slate-700 bg-slate-50 p-3.5 rounded-xl border border-slate-100 space-y-1">
-          <p className="font-bold text-slate-900 text-sm">{currentOrder.shippingAddress.name}</p>
+        <div className="bg-[#FAF7F2] p-3.5 rounded-2xl border border-[#EFE7DC] space-y-1 text-[#5C4F52]">
+          <p className="font-bold text-[#221518]">{currentOrder.shippingAddress.name}</p>
           <p>{currentOrder.shippingAddress.line1}{currentOrder.shippingAddress.line2 ? `, ${currentOrder.shippingAddress.line2}` : ""}</p>
           <p>{currentOrder.shippingAddress.city}, {currentOrder.shippingAddress.state} — <strong>{currentOrder.shippingAddress.pincode}</strong></p>
-          <p className="text-slate-500 pt-1">📞 {currentOrder.shippingAddress.phone}</p>
+          <p className="pt-1 text-[#221518] font-semibold">📞 {currentOrder.shippingAddress.phone}</p>
         </div>
       </div>
 
       {/* Action Buttons */}
       <div className="flex gap-3">
-        <Link href="/orders" className="flex-1 text-center border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold py-3 rounded-xl transition-colors text-xs">
-          View All Orders
-        </Link>
-        <Link href="/" className="flex-1 text-center bg-[#670D1F] hover:bg-[#520817] text-white font-bold py-3 rounded-xl transition-colors text-xs shadow-xs">
+        <Link
+          href="/"
+          className="w-full text-center bg-[#5E1224] hover:bg-[#470A18] text-white font-bold py-3.5 rounded-2xl transition-all text-xs uppercase tracking-wider shadow-md"
+        >
           Continue Shopping
         </Link>
       </div>
 
-      {/* Cancel button */}
-      {canCancel && (
-        <button
-          onClick={() => setShowConfirm(true)}
-          className="w-full border border-rose-200 text-rose-600 hover:bg-rose-50 font-bold py-2.5 rounded-xl transition-colors text-xs cursor-pointer"
-        >
-          Cancel Order
-        </button>
-      )}
-
-      {/* Confirmation Dialog */}
-      {showConfirm && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 px-4">
-          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4 text-center">
-            <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
-              <XCircle size={24} />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-slate-900">Cancel Order #{currentOrder.orderId}?</h3>
-              <p className="text-xs text-slate-500 mt-1">
-                Are you sure you want to cancel this order? This action cannot be undone.
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowConfirm(false)}
-                disabled={cancelling}
-                className="flex-1 border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold py-2.5 rounded-xl transition-colors text-xs"
-              >
-                Keep Order
-              </button>
-              <button
-                onClick={handleCancel}
-                disabled={cancelling}
-                className="flex-1 bg-rose-600 hover:bg-rose-700 disabled:bg-rose-300 text-white font-bold py-2.5 rounded-xl transition-colors text-xs shadow-xs"
-              >
-                {cancelling ? "Cancelling..." : "Yes, Cancel"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
