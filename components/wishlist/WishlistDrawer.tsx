@@ -91,7 +91,7 @@ export default function WishlistDrawer() {
                   className="relative w-20 h-20 rounded-xl overflow-hidden bg-white shrink-0 border border-gray-200"
                 >
                   <Image
-                    src={item.cardImage || item.image}
+                    src={item.image || item.cardImage}
                     alt={item.name}
                     fill
                     className="object-contain p-1"

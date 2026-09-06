@@ -607,7 +607,7 @@ export default function CheckoutPage() {
                   <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-[#FAF7F2] border border-[#EFE7DC] shrink-0 flex items-center justify-center">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={item.finalImageUrl || item.product.cardImage || item.product.image}
+                      src={item.finalImageUrl || item.product.image || item.product.cardImage}
                       alt={item.product.name}
                       className="w-full h-full object-contain p-0.5"
                     />

@@ -71,7 +71,7 @@ export default function CartSummary() {
             <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-[#FAF7F2] shrink-0 border border-[#EFE7DC] flex items-center justify-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={item.finalImageUrl || item.product.cardImage || item.product.image}
+                src={item.finalImageUrl || item.product.image || item.product.cardImage}
                 alt={item.product.name}
                 className="w-full h-full object-contain p-1"
               />
