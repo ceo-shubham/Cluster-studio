@@ -183,10 +183,59 @@ export default function AdminOrderDetailClient() {
         body: JSON.stringify({ status: newStatus, notes }),
       });
       if (!res.ok) throw new Error("Update failed");
-      toast.success(`Order status updated to ${newStatus.toUpperCase()}`);
-      setOrder((o) => (o ? { ...o, status: newStatus, notes } : { ...activeOrd, status: newStatus, notes }));
+      toast.success(`Order fulfillment status updated to ${newStatus.toUpperCase()}`);
+      const updatedOrder = order ? { ...order, status: newStatus, notes } : { ...activeOrd, status: newStatus, notes };
+      setOrder(updatedOrder);
+
+      // Sync with localStorage
+      try {
+        const localSaved = JSON.parse(localStorage.getItem("cluster_studio_orders") || "[]");
+        const idx = localSaved.findIndex((x: any) => x.orderId === activeOrd.orderId);
+        if (idx >= 0) {
+          localSaved[idx] = { ...localSaved[idx], status: newStatus, notes };
+          localStorage.setItem("cluster_studio_orders", JSON.stringify(localSaved));
+        }
+      } catch (e) {}
     } catch {
       toast.error("Failed to update status");
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  const updatePaymentStatus = async (newPaymentStatus: string) => {
+    const activeOrd = order || currentOrder;
+    setUpdatingStatus(true);
+    try {
+      const res = await fetch(`/api/admin/orders/${activeOrd.orderId || effectiveOrderId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-key": sessionStorage.getItem("adminKey") || "",
+        },
+        body: JSON.stringify({ paymentStatus: newPaymentStatus, notes }),
+      });
+      if (!res.ok) throw new Error("Update failed");
+      
+      const label = newPaymentStatus === "paid" ? "PAID & VERIFIED ✓" : newPaymentStatus.toUpperCase();
+      toast.success(`🎉 Payment status updated to ${label}`);
+      
+      const updatedOrder = order ? { ...order, paymentStatus: newPaymentStatus } : { ...activeOrd, paymentStatus: newPaymentStatus };
+      setOrder(updatedOrder);
+
+      // Sync with session storage & localStorage
+      try {
+        sessionStorage.setItem(`currentAdminOrder_${activeOrd.orderId}`, JSON.stringify(updatedOrder));
+        sessionStorage.setItem("currentAdminOrder", JSON.stringify(updatedOrder));
+        const localSaved = JSON.parse(localStorage.getItem("cluster_studio_orders") || "[]");
+        const idx = localSaved.findIndex((x: any) => x.orderId === activeOrd.orderId);
+        if (idx >= 0) {
+          localSaved[idx] = { ...localSaved[idx], paymentStatus: newPaymentStatus };
+          localStorage.setItem("cluster_studio_orders", JSON.stringify(localSaved));
+        }
+      } catch (e) {}
+    } catch {
+      toast.error("Failed to update payment status");
     } finally {
       setUpdatingStatus(false);
     }
@@ -507,9 +556,16 @@ export default function AdminOrderDetailClient() {
                       
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
-                          <h3 className="font-bold text-slate-900 text-sm sm:text-base truncate">
-                            {item.productName}
-                          </h3>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <h3 className="font-bold text-slate-900 text-sm sm:text-base truncate">
+                              {item.productName}
+                            </h3>
+                            {item.productId && (
+                              <span className="font-mono text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-bold shrink-0 border border-slate-200">
+                                ID: {item.productId}
+                              </span>
+                            )}
+                          </div>
                           {(item.customImageUrl || item.finalImageUrl) && (
                             <button
                               onClick={() => downloadAllAssets(item, idx)}
@@ -779,14 +835,28 @@ export default function AdminOrderDetailClient() {
                 <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
                   <a
                     href={`https://wa.me/91${cleanPhone}?text=${encodeURIComponent(
-                      `Hi ${currentOrder.userName}! Regarding your Cluster Studio Order #${currentOrder.orderId}...`
+                      `🛍️ *CLUSTER STUDIO - PAYMENT REQUEST & ORDER UPDATE*
+━━━━━━━━━━━━━━━━━━━━
+Hi ${currentOrder.userName}! 👋 Thank you for your order with Cluster Studio.
+
+🆔 *Order ID:* #${currentOrder.orderId}
+💰 *Total Payable:* ${formatPrice(currentOrder.totalAmount)}
+
+📦 *Ordered Items:*
+${currentOrder.items.map((i, idx) => `${idx + 1}. [Product ID: ${i.productId || "1-" + (idx+1)}] ${i.productName} (Qty: ${i.quantity})`).join("\n")}
+
+📲 *Please complete payment using UPI:*
+• UPI ID: clusterstudio@upi
+• Amount: ${formatPrice(currentOrder.totalAmount)}
+
+Kindly share the payment screenshot here so we can verify your payment and start crafting your personalized items. Thank you!`
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-1.5 bg-[#25D366] hover:bg-[#1ebe5d] text-white font-bold text-xs py-2.5 rounded-xl transition-colors shadow-xs"
+                    className="flex items-center justify-center gap-1.5 bg-[#25D366] hover:bg-[#1ebe5d] text-white font-extrabold text-xs py-2.5 rounded-xl transition-colors shadow-xs"
                   >
                     <MessageSquare size={14} />
-                    <span>WhatsApp Customer</span>
+                    <span>Send UPI QR &amp; Chat on WhatsApp</span>
                   </a>
 
                   <a
@@ -827,36 +897,86 @@ export default function AdminOrderDetailClient() {
               </div>
             </div>
 
-            {/* Payment Summary */}
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 space-y-3">
-              <h2 className="font-bold text-slate-900 text-sm pb-3 border-b border-slate-100">
-                Payment Breakdown
-              </h2>
+            {/* Payment Summary & Admin Status Control */}
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h2 className="font-bold text-slate-900 text-sm">
+                  Payment Management
+                </h2>
+                {currentOrder.paymentStatus === "paid" ? (
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-100 text-emerald-900 border border-emerald-300">
+                    Paid ✓
+                  </span>
+                ) : currentOrder.paymentStatus === "in_progress" ? (
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-100 text-amber-900 border border-amber-300 animate-pulse">
+                    In Progress ⏳
+                  </span>
+                ) : (
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-slate-100 text-slate-800 border border-slate-300">
+                    {currentOrder.paymentStatus || "COD"}
+                  </span>
+                )}
+              </div>
 
               <div className="space-y-2 text-xs">
                 <div className="flex justify-between text-slate-600">
-                  <span>Payment Method</span>
-                  <span className="font-bold text-slate-900 uppercase">Cash on Delivery (COD)</span>
-                </div>
-                <div className="flex justify-between text-slate-600">
-                  <span>Payment Status</span>
-                  <span
-                    className={`font-extrabold uppercase text-[11px] ${
-                      currentOrder.paymentStatus === "paid" ? "text-emerald-600" : "text-amber-600"
-                    }`}
-                  >
-                    {currentOrder.paymentStatus || "Pending (COD)"}
+                  <span>Payment Mode</span>
+                  <span className="font-bold text-slate-900 uppercase">
+                    {currentOrder.paymentStatus === "pending" ? "Cash on Delivery (COD)" : "Online Payment (UPI/QR)"}
                   </span>
                 </div>
                 <div className="flex justify-between text-slate-600">
-                  <span>Delivery Charges</span>
-                  <span className="font-bold text-emerald-600">FREE Pan-India</span>
-                </div>
-                <div className="pt-2 border-t border-slate-100 flex justify-between text-sm font-extrabold text-slate-900">
                   <span>Grand Total</span>
-                  <span className={isCancelled ? "text-slate-400 line-through" : "text-[#670D1F]"}>
+                  <span className={`font-extrabold ${isCancelled ? "text-slate-400 line-through" : "text-[#670D1F] text-sm"}`}>
                     {formatPrice(currentOrder.totalAmount)}
                   </span>
+                </div>
+              </div>
+
+              {/* Admin Payment Action Buttons */}
+              <div className="pt-3 border-t border-slate-100 space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                  Admin Payment Status Control
+                </label>
+
+                <div className="flex flex-col gap-2">
+                  <button
+                    disabled={updatingStatus || currentOrder.paymentStatus === "paid"}
+                    onClick={() => updatePaymentStatus("paid")}
+                    className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                      currentOrder.paymentStatus === "paid"
+                        ? "bg-emerald-600 text-white shadow-xs"
+                        : "bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300"
+                    } disabled:opacity-70`}
+                  >
+                    <Check size={14} />
+                    <span>Mark as Paid (Verified ✓)</span>
+                  </button>
+
+                  <button
+                    disabled={updatingStatus || currentOrder.paymentStatus === "in_progress"}
+                    onClick={() => updatePaymentStatus("in_progress")}
+                    className={`w-full py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                      currentOrder.paymentStatus === "in_progress"
+                        ? "bg-amber-500 text-white shadow-xs"
+                        : "bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300"
+                    } disabled:opacity-70`}
+                  >
+                    <Clock size={13} />
+                    <span>Set as In Progress (Pending QR)</span>
+                  </button>
+
+                  <button
+                    disabled={updatingStatus || currentOrder.paymentStatus === "pending"}
+                    onClick={() => updatePaymentStatus("pending")}
+                    className={`w-full py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                      currentOrder.paymentStatus === "pending"
+                        ? "bg-slate-700 text-white shadow-xs"
+                        : "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200"
+                    } disabled:opacity-70`}
+                  >
+                    <span>Set as COD (Pending Delivery)</span>
+                  </button>
                 </div>
               </div>
             </div>

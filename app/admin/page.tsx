@@ -579,9 +579,14 @@ export default function AdminDashboard() {
 
                           <td className="py-4 px-4 max-w-xs">
                             <div className="space-y-1">
-                              {order.items?.map((item, idx) => (
+                              {order.items?.map((item: any, idx) => (
                                 <div key={idx} className="text-slate-700 truncate font-medium flex items-center gap-1">
                                   <span className="text-slate-400">•</span>
+                                  {item.productId && (
+                                    <span className="font-mono text-[10px] bg-slate-100 text-slate-600 px-1 py-0.2 rounded font-bold">
+                                      {item.productId}
+                                    </span>
+                                  )}
                                   <span className="truncate">{item.productName}</span>
                                   <span className="text-slate-400 text-[11px]">×{item.quantity}</span>
                                 </div>
@@ -593,9 +598,21 @@ export default function AdminDashboard() {
                             <div className={`font-extrabold ${isCancelled ? "text-slate-400 line-through" : "text-[#670D1F] text-sm"}`}>
                               {formatPrice(order.totalAmount)}
                             </div>
-                            <span className="text-[10px] text-slate-400 block uppercase font-semibold">
-                              {order.paymentStatus || "COD"}
-                            </span>
+                            <div className="mt-1">
+                              {order.paymentStatus === "in_progress" ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase bg-amber-100 text-amber-900 border border-amber-300 animate-pulse">
+                                  In Progress ⏳
+                                </span>
+                              ) : order.paymentStatus === "paid" ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase bg-emerald-100 text-emerald-900 border border-emerald-300">
+                                  Paid ✓
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-slate-100 text-slate-700 border border-slate-200">
+                                  {order.paymentStatus || "COD"}
+                                </span>
+                              )}
+                            </div>
                           </td>
 
                           <td className="py-4 px-4 whitespace-nowrap">

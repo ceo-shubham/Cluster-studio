@@ -110,6 +110,12 @@ export default function OrderDetailClient() {
   };
 
   const stepIndex = STEPS.indexOf(currentOrder.status);
+  const isOnlineInProgress = currentOrder.paymentStatus === "in_progress";
+  const isPaid = currentOrder.paymentStatus === "paid";
+  const adminWhatsAppNumber = "918380808435";
+
+  const whatsAppMessage = `Hi Admin, regarding my Cluster Studio Order #${currentOrder.orderId} (Total: ${formatPrice(currentOrder.totalAmount)}). Please share the UPI QR code or verify my payment!`;
+  const adminWhatsAppUrl = `https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(whatsAppMessage)}`;
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
@@ -133,7 +139,7 @@ export default function OrderDetailClient() {
           )}
           <div>
             <h1 className="text-xl font-serif font-bold text-[#221518]">
-              {currentOrder.status === "cancelled" ? "Order Cancelled" : "Order Confirmed & In Progress"}
+              {currentOrder.status === "cancelled" ? "Order Cancelled" : "Order Confirmed"}
             </h1>
             <p className="text-xs text-[#736B6D] mt-0.5">
               Order ID: <strong className="font-mono text-[#221518]">#{currentOrder.orderId}</strong> · Placed on {formatDate(currentOrder.createdAt)}
@@ -141,10 +147,52 @@ export default function OrderDetailClient() {
           </div>
         </div>
 
-        <span className="self-start sm:self-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-50 text-amber-800 border border-amber-200">
-          {currentOrder.status}
-        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Payment Status Badge */}
+          {isOnlineInProgress && (
+            <span className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300 animate-pulse">
+              Payment: In Progress ⏳
+            </span>
+          )}
+          {isPaid && (
+            <span className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-900 border border-emerald-300">
+              Payment: Paid ✓
+            </span>
+          )}
+          {!isOnlineInProgress && !isPaid && (
+            <span className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-slate-100 text-slate-800 border border-slate-200">
+              Payment: COD
+            </span>
+          )}
+
+          {/* Fulfillment Status Badge */}
+          <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-50 text-[#5E1224] border border-rose-200">
+            {currentOrder.status}
+          </span>
+        </div>
       </div>
+
+      {/* ── Payment In Progress Notice & WhatsApp Action ── */}
+      {isOnlineInProgress && (
+        <div className="bg-amber-50/90 border-2 border-amber-300 rounded-3xl p-5 space-y-3 shadow-xs">
+          <div className="flex items-center gap-2 text-amber-900 font-bold text-sm">
+            <span>⏳</span>
+            <span>Online Payment Verification In Progress</span>
+          </div>
+          <p className="text-xs text-amber-800 leading-relaxed">
+            Your order has been recorded. If you haven&apos;t completed the UPI payment yet, please contact our Admin on WhatsApp to get the <strong>UPI QR code</strong> or share your payment screenshot. Admin will verify and mark your payment as <strong>Paid ✓</strong>.
+          </p>
+          <a
+            href={adminWhatsAppUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebe5d] text-white font-bold text-xs py-2.5 px-5 rounded-xl shadow-xs transition-transform active:scale-98"
+          >
+            <span>📲</span>
+            <span>WhatsApp Admin (+91 8380808435)</span>
+          </a>
+        </div>
+      )}
 
       {/* Live Fulfillment Timeline */}
       {currentOrder.status !== "cancelled" && (
@@ -189,7 +237,14 @@ export default function OrderDetailClient() {
                 />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-xs sm:text-sm text-[#221518] truncate">{item.productName}</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-bold text-xs sm:text-sm text-[#221518] truncate">{item.productName}</p>
+                  {item.productId && (
+                    <span className="font-mono text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded shrink-0">
+                      ID: {item.productId}
+                    </span>
+                  )}
+                </div>
                 {item.customImageUrl && (
                   <p className="text-[11px] text-emerald-700 font-medium">✓ Custom photo attached</p>
                 )}

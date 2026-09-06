@@ -89,14 +89,17 @@ export default function CheckoutPage() {
     setSubmitting(true);
     const generatedId = "CS-" + Math.floor(100000 + Math.random() * 900000);
 
+    const isOnlinePayment = paymentMethod !== "cod";
+    const paymentStatusVal = isOnlinePayment ? "in_progress" : "pending";
+
     const orderPayload = {
       orderId: generatedId,
       userName: shippingAddress.name,
       userEmail: shippingAddress.email || "customer@clusterstudio.in",
       totalAmount: finalTotal,
       status: "pending",
-      paymentStatus: paymentMethod === "cod" ? "pending" : "paid",
-      paymentMethod: paymentMethod.toUpperCase(),
+      paymentStatus: paymentStatusVal,
+      paymentMethod: isOnlinePayment ? "ONLINE" : "COD",
       createdAt: new Date().toISOString(),
       shippingAddress: {
         name: shippingAddress.name,
@@ -132,7 +135,7 @@ export default function CheckoutPage() {
       const localSaved = JSON.parse(localStorage.getItem("cluster_studio_orders") || "[]");
       localSaved.unshift({ ...orderPayload, orderId: actualId });
       localStorage.setItem("cluster_studio_orders", JSON.stringify(localSaved));
-      sessionStorage.setItem(`currentAdminOrder_${actualId}`, JSON.stringify(orderPayload));
+      sessionStorage.setItem(`currentAdminOrder_${actualId}`, JSON.stringify({ ...orderPayload, orderId: actualId }));
 
       setConfirmedOrderId(actualId);
       clearCart();
@@ -144,6 +147,7 @@ export default function CheckoutPage() {
       const localSaved = JSON.parse(localStorage.getItem("cluster_studio_orders") || "[]");
       localSaved.unshift(orderPayload);
       localStorage.setItem("cluster_studio_orders", JSON.stringify(localSaved));
+      sessionStorage.setItem(`currentAdminOrder_${generatedId}`, JSON.stringify(orderPayload));
       setConfirmedOrderId(generatedId);
       clearCart();
       setCurrentStep(4);
@@ -170,57 +174,121 @@ export default function CheckoutPage() {
   }
 
   // ════════════════════════════════════════════════════════════════════════
-  // ── SCREEN 9: ORDER SUCCESS (Thank You Screen) ──────────────────────────
+  // ── SCREEN 9: ORDER SUCCESS (Thank You & WhatsApp Share Screen) ─────────
   // ════════════════════════════════════════════════════════════════════════
   if (currentStep === 4) {
+    const isOnline = paymentMethod !== "cod";
+    const adminWhatsAppNumber = "918380808435";
+    
+    // Construct WhatsApp prefilled message to Admin
+    const itemsText = items.length > 0 
+      ? items.map((i, idx) => `${idx + 1}. [Product ID: ${i.product.id}] ${i.product.name} (Qty: ${i.quantity}) - ₹${i.product.price * i.quantity}`).join("\n")
+      : `1. Order items details`;
+
+    const whatsAppMessage = `🛍️ *NEW ONLINE ORDER - CLUSTER STUDIO*
+━━━━━━━━━━━━━━━━━━━━
+🆔 *Order ID:* #${confirmedOrderId}
+👤 *Customer Name:* ${shippingAddress.name}
+📞 *Customer Phone:* ${shippingAddress.phone}
+📍 *Delivery Address:* ${shippingAddress.line1}${shippingAddress.line2 ? ", " + shippingAddress.line2 : ""}, ${shippingAddress.city}, ${shippingAddress.state} - ${shippingAddress.pincode}
+
+📦 *ORDERED ITEMS:*
+${itemsText}
+
+💰 *TOTAL AMOUNT:* ₹${finalTotal}
+💳 *Payment Mode:* ${isOnline ? "Online Payment (In Progress ⏳)" : "Cash on Delivery"}
+━━━━━━━━━━━━━━━━━━━━
+⚠️ *Action Required:* ${isOnline ? "Please share the UPI QR code with me to complete the payment!" : "Order placed with Cash on Delivery."}`;
+
+    const adminWhatsAppUrl = `https://wa.me/${adminWhatsAppNumber}?text=${encodeURIComponent(whatsAppMessage)}`;
+
     return (
-      <div className="max-w-lg mx-auto px-4 py-12 text-center space-y-6 animate-in zoom-in-95 duration-200">
+      <div className="max-w-lg mx-auto px-4 py-8 text-center space-y-5 animate-in zoom-in-95 duration-200">
         
         {/* Celebration Checkmark Icon */}
-        <div className="relative w-20 h-20 rounded-full bg-emerald-50 border-2 border-emerald-500 flex items-center justify-center mx-auto text-emerald-600 shadow-lg">
-          <Check size={40} strokeWidth={2.5} />
+        <div className="relative w-16 h-16 rounded-full bg-emerald-50 border-2 border-emerald-500 flex items-center justify-center mx-auto text-emerald-600 shadow-md">
+          <Check size={32} strokeWidth={2.5} />
           <div className="absolute -top-1 -right-1 text-amber-500 animate-bounce">
             ✨
           </div>
         </div>
 
-        <div className="space-y-2">
-          <h1 className="text-3xl font-serif font-bold text-[#221518]">
-            Thank You!
+        <div className="space-y-1.5">
+          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#221518]">
+            Order Placed Successfully!
           </h1>
           <p className="text-xs sm:text-sm text-[#5C4F52]">
-            Your order has been placed successfully.
+            {isOnline 
+              ? "Your order has been recorded. Complete payment via WhatsApp QR code below."
+              : "Your Cash on Delivery order is confirmed and will be processed soon."}
           </p>
         </div>
 
-        {/* Order ID Card */}
-        <div className="bg-[#FAF7F2] rounded-2xl border border-[#EFE7DC] p-4 text-center space-y-1 shadow-2xs">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-[#736B6D]">
+        {/* Order ID & Payment Status Card */}
+        <div className="bg-[#FAF7F2] rounded-2xl border border-[#EFE7DC] p-4 text-center space-y-2 shadow-2xs">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#736B6D] block">
             Order Confirmation
           </span>
           <p className="font-mono font-extrabold text-lg text-[#5E1224]">
             Order ID: #{confirmedOrderId}
           </p>
+          
+          <div className="pt-1 flex items-center justify-center gap-2">
+            <span className="text-xs text-[#5C4F52]">Payment Status:</span>
+            {isOnline ? (
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300 animate-pulse">
+                Online (In Progress ⏳)
+              </span>
+            ) : (
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-800 border border-slate-300">
+                Cash on Delivery
+              </span>
+            )}
+          </div>
         </div>
 
-        <p className="text-xs text-[#736B6D] max-w-sm mx-auto leading-relaxed">
-          We have sent the order details to your email and WhatsApp. Our team will start crafting your personalized item right away.
-        </p>
+        {/* ── WhatsApp QR Code Request Call-To-Action (For Online Orders) ── */}
+        {isOnline && (
+          <div className="bg-emerald-50/90 border-2 border-emerald-500/60 rounded-2xl p-4 sm:p-5 text-left space-y-3 shadow-xs">
+            <div className="flex items-center gap-2 text-emerald-900 font-bold text-sm">
+              <span className="text-lg">📲</span>
+              <span>Send Order to Admin &amp; Get QR Code</span>
+            </div>
+            
+            <p className="text-xs text-emerald-800 leading-relaxed">
+              To complete your payment, click the button below to share your order details with our Admin on WhatsApp. Admin will immediately send you the <strong>UPI Payment QR Code</strong>.
+            </p>
+
+            <a
+              href={adminWhatsAppUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebe5d] text-white font-extrabold text-xs uppercase tracking-wider py-3.5 rounded-xl shadow-md transition-all active:scale-98 cursor-pointer"
+            >
+              <span>📲</span>
+              <span>Send Order to Admin WhatsApp</span>
+            </a>
+
+            <div className="text-[11px] text-emerald-700 font-medium bg-emerald-100/60 p-2.5 rounded-lg border border-emerald-200">
+              💡 <strong>Note:</strong> Your payment status will show <strong>In Progress ⏳</strong> until Admin verifies your UPI payment from the admin panel.
+            </div>
+          </div>
+        )}
 
         {/* Action Buttons */}
-        <div className="pt-2 space-y-3">
+        <div className="pt-1 space-y-2.5">
           <Link
-            href="/"
-            className="w-full block bg-[#5E1224] hover:bg-[#470A18] text-white font-bold text-xs uppercase tracking-wider py-4 rounded-2xl shadow-md transition-transform active:scale-98"
+            href={`/orders/${confirmedOrderId}`}
+            className="w-full block bg-[#5E1224] hover:bg-[#470A18] text-white font-bold text-xs uppercase tracking-wider py-3.5 rounded-2xl shadow-md transition-transform active:scale-98"
           >
-            CONTINUE SHOPPING
+            Track Order Status →
           </Link>
 
           <Link
-            href={`/orders/${confirmedOrderId}`}
-            className="inline-block text-xs font-bold text-[#5E1224] hover:underline"
+            href="/"
+            className="w-full block border border-[#EFE7DC] hover:bg-[#FAF7F2] text-[#221518] font-bold text-xs uppercase tracking-wider py-3 rounded-2xl transition-colors"
           >
-            Track Your Order →
+            Continue Shopping
           </Link>
         </div>
 

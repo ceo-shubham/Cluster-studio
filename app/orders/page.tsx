@@ -8,9 +8,10 @@ interface OrderSummary {
   orderId: string;
   totalAmount: number;
   status: string;
+  paymentStatus?: string;
   createdAt: string;
   userName?: string;
-  items: { productName: string; quantity: number; price?: number; productImage?: string; finalImageUrl?: string }[];
+  items: { productId?: string; productName: string; quantity: number; price?: number; productImage?: string; finalImageUrl?: string }[];
   shippingAddress?: { city?: string; state?: string };
 }
 
@@ -141,9 +142,21 @@ export default function OrdersPage() {
                 </p>
               </div>
 
-              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusColor(order.status)}`}>
-                {order.status}
-              </span>
+              <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                {order.paymentStatus === "in_progress" && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300">
+                    Payment: In Progress ⏳
+                  </span>
+                )}
+                {order.paymentStatus === "paid" && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-900 border border-emerald-300">
+                    Paid ✓
+                  </span>
+                )}
+                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusColor(order.status)}`}>
+                  {order.status}
+                </span>
+              </div>
             </div>
 
             {/* Items Ordered List */}
