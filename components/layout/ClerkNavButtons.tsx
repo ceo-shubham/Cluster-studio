@@ -115,36 +115,36 @@ export default function ClerkNavButtons({ variant = "desktop" }: ClerkNavButtons
     // DRAWER VARIANT: Direct Integrated Card
     if (variant === "drawer") {
       return (
-        <div className="bg-[#FAF7F2] rounded-2xl p-3.5 border border-[#EFE7DC] space-y-3 shadow-2xs">
+        <div className="bg-[#F5ECE1]/60 rounded-2xl p-4 border border-[#EFE7DC] space-y-3 shadow-2xs">
           <div className="flex items-center gap-3">
             {avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={avatarUrl} alt={displayName} className="w-9 h-9 rounded-full object-cover border-2 border-[#5E1224]" />
+              <img src={avatarUrl} alt={displayName} className="w-10 h-10 rounded-full object-cover border-2 border-[#5E1224] shrink-0" />
             ) : (
-              <div className="w-9 h-9 rounded-full bg-[#5E1224] text-white flex items-center justify-center font-bold text-xs">
+              <div className="w-10 h-10 rounded-full bg-[#5E1224] text-white flex items-center justify-center font-bold text-sm shrink-0">
                 {displayName.charAt(0).toUpperCase()}
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-[#221518] truncate">{displayName}</p>
-              <p className="text-[10px] text-[#8C7A7E] truncate">{user.primaryEmailAddress?.emailAddress}</p>
+              <p className="text-sm font-bold text-[#221518] truncate">{displayName}</p>
+              <p className="text-[11px] text-[#736B6D] truncate font-medium">{user.primaryEmailAddress?.emailAddress}</p>
             </div>
           </div>
 
-          <div className="space-y-1 pt-2 border-t border-[#EFE7DC]">
+          <div className="space-y-1 pt-2.5 border-t border-[#EFE7DC]">
             <button
               onClick={handleOpenProfile}
-              className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#221518] hover:bg-white transition-colors text-left cursor-pointer"
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-[#221518] hover:bg-white transition-colors text-left cursor-pointer border border-transparent hover:border-[#EFE7DC]"
             >
-              <User size={13} className="text-[#5E1224]" />
+              <User size={14} className="text-[#5E1224]" />
               <span>Manage Profile</span>
             </button>
 
             <button
               onClick={handleSignOut}
-              className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors text-left cursor-pointer"
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors text-left cursor-pointer"
             >
-              <LogOut size={13} />
+              <LogOut size={14} />
               <span>Sign Out</span>
             </button>
           </div>
@@ -157,18 +157,18 @@ export default function ClerkNavButtons({ variant = "desktop" }: ClerkNavButtons
       <div ref={menuRef} className="relative">
         <button
           onClick={() => setMenuOpen(!menuOpen)}
-          className="flex items-center gap-2 bg-[#FAF7F2] hover:bg-[#F5ECE1] text-[#221518] px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs border border-[#EFE7DC] cursor-pointer"
+          className="flex items-center gap-2 bg-[#FAF7F2] hover:bg-[#F5ECE1] text-[#221518] px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-2xs border border-[#EFE7DC] cursor-pointer"
         >
           {avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={avatarUrl} alt={displayName} className="w-5 h-5 rounded-full object-cover border border-[#5E1224]" />
+            <img src={avatarUrl} alt={displayName} className="w-6 h-6 rounded-full object-cover border border-[#5E1224] shrink-0" />
           ) : (
-            <div className="w-5 h-5 rounded-full bg-[#5E1224] text-white flex items-center justify-center font-bold text-[10px]">
+            <div className="w-6 h-6 rounded-full bg-[#5E1224] text-white flex items-center justify-center font-bold text-[10px] shrink-0">
               {displayName.charAt(0).toUpperCase()}
             </div>
           )}
-          <span className="max-w-[90px] truncate">{displayName}</span>
-          <ChevronDown size={12} className={`transition-transform text-[#8C7A7E] ${menuOpen ? "rotate-180" : ""}`} />
+          <span className="font-bold text-[#221518] max-w-[120px] truncate">{displayName}</span>
+          <ChevronDown size={14} className={`transition-transform text-[#5E1224] ${menuOpen ? "rotate-180" : ""}`} />
         </button>
 
         {menuOpen && (
