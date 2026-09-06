@@ -278,7 +278,7 @@ ${itemsText}
         {/* Action Buttons */}
         <div className="pt-1 space-y-2.5">
           <Link
-            href={`/orders/${confirmedOrderId}`}
+            href={`/orders/view?id=${confirmedOrderId}`}
             className="w-full block bg-[#5E1224] hover:bg-[#470A18] text-white font-bold text-xs uppercase tracking-wider py-3.5 rounded-2xl shadow-md transition-transform active:scale-98"
           >
             Track Order Status →

@@ -254,7 +254,7 @@ export default function AdminDashboard() {
 
                   <div className="flex items-center gap-2">
                     <Link
-                      href={`/admin/orders/${quickInspectOrder.orderId}`}
+                      href={`/admin/orders/view?id=${quickInspectOrder.orderId}`}
                       onClick={() => handleManageClick(quickInspectOrder)}
                       className="bg-[#670D1F] hover:bg-[#520817] text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-xs transition-colors"
                     >
@@ -277,7 +277,7 @@ export default function AdminDashboard() {
                   Close
                 </button>
                 <Link
-                  href={`/admin/orders/${quickInspectOrder.orderId}`}
+                  href={`/admin/orders/view?id=${quickInspectOrder.orderId}`}
                   onClick={() => handleManageClick(quickInspectOrder)}
                   className="px-4 py-2 rounded-xl bg-[#670D1F] text-white text-xs font-bold flex items-center gap-1.5 shadow hover:bg-[#520817] transition-colors"
                 >
@@ -630,7 +630,7 @@ export default function AdminDashboard() {
 
                           <td className="py-4 px-4 text-right pr-6 whitespace-nowrap">
                             <Link
-                              href={`/admin/orders/${order.orderId}`}
+                              href={`/admin/orders/view?id=${order.orderId}`}
                               onClick={() => handleManageClick(order)}
                               className="inline-flex items-center gap-1 bg-[#670D1F] hover:bg-[#520817] text-white font-bold text-xs px-3 py-1.5 rounded-xl transition-all shadow-xs"
                             >
@@ -774,7 +774,7 @@ export default function AdminDashboard() {
                         </button>
 
                         <Link
-                          href={`/admin/orders/${order.orderId}`}
+                          href={`/admin/orders/view?id=${order.orderId}`}
                           onClick={() => handleManageClick(order)}
                           className="bg-[#670D1F] hover:bg-[#520817] text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors shadow-xs"
                         >

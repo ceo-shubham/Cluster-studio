@@ -53,14 +53,14 @@ export default function AdminOrderDetailClient() {
   const router = useRouter();
 
   const getEffectiveOrderId = () => {
-    if (params?.orderId && params.orderId !== "view") return params.orderId;
     if (typeof window !== "undefined") {
+      const searchParam = new URLSearchParams(window.location.search).get("id");
+      if (searchParam) return searchParam;
       const parts = window.location.pathname.split("/").filter(Boolean);
       const last = parts[parts.length - 1];
       if (last && last !== "view") return last;
-      const searchParam = new URLSearchParams(window.location.search).get("id");
-      if (searchParam) return searchParam;
     }
+    if (params?.orderId && params.orderId !== "view") return params.orderId;
     try {
       const cached = sessionStorage.getItem("currentAdminOrder");
       if (cached) {

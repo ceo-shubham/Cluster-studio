@@ -74,7 +74,7 @@ export default function OrdersPage() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchId.trim()) return;
-    window.location.href = `/orders/${searchId.trim()}`;
+    window.location.href = `/orders/view?id=${encodeURIComponent(searchId.trim())}`;
   };
 
   const getStatusColor = (status: string) => {
@@ -197,7 +197,7 @@ export default function OrdersPage() {
               </div>
 
               <Link
-                href={`/orders/${order.orderId}`}
+                href={`/orders/view?id=${order.orderId}`}
                 className="text-xs font-bold text-[#5E1224] hover:underline flex items-center gap-1"
               >
                 <span>View Details</span>
