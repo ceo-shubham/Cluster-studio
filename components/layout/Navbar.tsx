@@ -232,21 +232,22 @@ export default function Navbar() {
 
       {/* ── Mobile Slide-Over Drawer Navigation ── */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className="fixed inset-0 z-[100] lg:hidden">
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity z-[90]"
             onClick={() => setMobileMenuOpen(false)}
           />
 
           {/* Drawer Container */}
-          <div className="fixed inset-y-0 left-0 max-w-xs w-full bg-[#FFFDF9] shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-250">
+          <div className="fixed inset-y-0 left-0 max-w-[300px] w-full bg-[#FFFDF9] shadow-2xl flex flex-col z-[100] animate-in slide-in-from-left duration-250">
             {/* Drawer Header */}
             <div className="p-5 border-b border-[#EFE7DC] flex items-center justify-between">
               <BrandLogo variant="dark" size="sm" />
               <button
                 onClick={() => setMobileMenuOpen(false)}
-                className="p-1.5 rounded-full bg-[#F5ECE1] text-[#221518] hover:bg-[#EFE7DC]"
+                className="p-1.5 rounded-full bg-[#F5ECE1] text-[#221518] hover:bg-[#EFE7DC] cursor-pointer"
+                aria-label="Close menu"
               >
                 <X size={18} />
               </button>
@@ -254,6 +255,11 @@ export default function Navbar() {
 
             {/* Drawer Links */}
             <div className="flex-1 overflow-y-auto p-5 space-y-6">
+              {/* User Auth Section (Card / Login Button) */}
+              <div>
+                <NavbarAuthSection variant="drawer" />
+              </div>
+
               {/* Categories */}
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-[#8C7A7E] mb-3">
@@ -302,7 +308,7 @@ export default function Navbar() {
                   </Link>
                   <button
                     onClick={() => { setMobileMenuOpen(false); openWishlist(); }}
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-[#221518] hover:bg-[#F5ECE1] transition-colors text-left"
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-[#221518] hover:bg-[#F5ECE1] transition-colors text-left cursor-pointer"
                   >
                     <span className="flex items-center gap-2.5">
                       <Heart size={15} className="text-[#5E1224]" />
@@ -321,11 +327,6 @@ export default function Navbar() {
                     <span>Contact Support</span>
                   </Link>
                 </div>
-              </div>
-
-              {/* Mobile Auth Button */}
-              <div className="pt-2 border-t border-[#EFE7DC]">
-                <NavbarAuthSection />
               </div>
             </div>
 

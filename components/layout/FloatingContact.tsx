@@ -12,7 +12,7 @@ export default function FloatingContact() {
   if (pathname?.startsWith("/admin")) return null;
 
   return (
-    <div className="fixed bottom-6 right-4 z-50 flex flex-col gap-3">
+    <div className="fixed bottom-6 right-4 z-30 flex flex-col gap-3">
       <a
         href={`https://wa.me/${PHONE}?text=${encodeURIComponent(WHATSAPP_MSG)}`}
         target="_blank"
