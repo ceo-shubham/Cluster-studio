@@ -52,14 +52,27 @@ const HERO_SLIDES = [
   },
 ];
 
-// 3 Core Active Categories: Mugs, Bottles, T-Shirts
+// 4 Active Categories: All, Mugs, Bottles, T-Shirts
 const CATEGORY_PILLS = [
+  { 
+    name: "All", 
+    slug: "all", 
+    count: "16+ Gifts",
+    iconSvg: (
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <rect width="7" height="7" x="3" y="3" rx="1.5" />
+        <rect width="7" height="7" x="14" y="3" rx="1.5" />
+        <rect width="7" height="7" x="14" y="14" rx="1.5" />
+        <rect width="7" height="7" x="3" y="14" rx="1.5" />
+      </svg>
+    )
+  },
   { 
     name: "Mugs", 
     slug: "mugs", 
-    count: "7+ Designs",
+    count: "4 Designs",
     iconSvg: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 8h1a4 4 0 1 1 0 8h-1" />
         <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" />
         <line x1="6" y1="2" x2="6" y2="4" />
@@ -73,7 +86,7 @@ const CATEGORY_PILLS = [
     slug: "bottles", 
     count: "Stainless Steel",
     iconSvg: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <path d="M8 2h8v4H8z" />
         <path d="M9 6v3L6 11v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V11l-3-2V6" />
         <path d="M10 14h4" />
@@ -85,7 +98,7 @@ const CATEGORY_PILLS = [
     slug: "clothing", 
     count: "100% Cotton",
     iconSvg: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z" />
       </svg>
     )
@@ -94,7 +107,7 @@ const CATEGORY_PILLS = [
 
 export default function HomePage() {
   const [activeCategory, setActiveCategory] = useState<string>("all");
-  const [showAllBestSellers, setShowAllBestSellers] = useState<boolean>(false);
+  const [showAllBestSellers, setShowAllBestSellers] = useState<boolean>(true);
   const [heroSlide, setHeroSlide] = useState(0);
 
   // Auto-advance hero carousel every 4.5 seconds
@@ -114,10 +127,9 @@ export default function HomePage() {
   };
 
   const handleCategoryClick = (slug: string) => {
-    if (activeCategory === slug) {
-      setActiveCategory("all");
-    } else {
-      setActiveCategory(slug);
+    setActiveCategory(slug);
+    if (slug === "all") {
+      setShowAllBestSellers(true);
     }
   };
 
@@ -135,7 +147,7 @@ export default function HomePage() {
     if (activeCategory === "mugs") return "Mugs Collection";
     if (activeCategory === "bottles") return "Bottles Collection";
     if (activeCategory === "clothing") return "T-Shirts & Apparel";
-    return showAllBestSellers ? "All Products" : "Best Sellers";
+    return showAllBestSellers ? "All Personalized Gifts" : "Best Sellers";
   };
 
   const getSectionSubtitle = () => {
@@ -250,8 +262,8 @@ export default function HomePage() {
           </h2>
         </div>
 
-        {/* 3 Prominent Responsive Category Buttons */}
-        <div className="grid grid-cols-3 gap-3 sm:gap-8 max-w-2xl mx-auto text-center">
+        {/* 4 Prominent Responsive Category Buttons: All, Mugs, Bottles, T-Shirts */}
+        <div className="grid grid-cols-4 gap-2 sm:gap-6 max-w-2xl mx-auto text-center">
           {CATEGORY_PILLS.map((cat) => {
             const isSelected = activeCategory === cat.slug;
             return (
@@ -262,7 +274,7 @@ export default function HomePage() {
               >
                 {/* Circle Button */}
                 <div
-                  className={`w-18 h-18 sm:w-24 sm:h-24 rounded-full border-2 flex items-center justify-center transition-all duration-300 shadow-sm group-hover:scale-105 active:scale-95 ${
+                  className={`w-15 h-15 sm:w-22 sm:h-22 rounded-full border-2 flex items-center justify-center transition-all duration-300 shadow-sm group-hover:scale-105 active:scale-95 ${
                     isSelected
                       ? "bg-[#5E1224] text-white border-[#5E1224] shadow-lg ring-4 ring-[#5E1224]/20"
                       : "bg-[#FAF7F2] text-[#5E1224] border-[#EFE7DC] group-hover:border-[#5E1224] group-hover:bg-white"
