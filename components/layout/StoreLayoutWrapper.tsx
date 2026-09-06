@@ -7,7 +7,6 @@ import ClearLegacyCart from "@/components/layout/ClearLegacyCart";
 import FloatingContact from "@/components/layout/FloatingContact";
 import WishlistDrawer from "@/components/wishlist/WishlistDrawer";
 import GiftFinderModal from "@/components/gift-finder/GiftFinderModal";
-import LiveSalesToast from "@/components/ui/LiveSalesToast";
 
 export default function StoreLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -25,7 +24,6 @@ export default function StoreLayoutWrapper({ children }: { children: React.React
       <main className="flex-1">{children}</main>
       <Footer />
       <FloatingContact />
-      <LiveSalesToast />
       <WishlistDrawer />
       <GiftFinderModal />
     </>
