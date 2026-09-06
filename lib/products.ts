@@ -37,8 +37,6 @@ export const products: Product[] = [
     gallery: [
       "/showimg/1 (1).jpeg",
       "/bannerimg/1 (1).jpeg",
-      "/bannerimg/1 (2).jpeg",
-      "/bannerimg/1 (4).jpeg",
     ],
     colors: ["#FFFFFF", "#111111"],
     giftTags: ["birthday", "corporate", "personalized", "under299", "photo"],
@@ -68,8 +66,6 @@ export const products: Product[] = [
     gallery: [
       "/showimg/1 (2).jpeg",
       "/bannerimg/1 (2).jpeg",
-      "/bannerimg/1 (1).jpeg",
-      "/bannerimg/1 (4).jpeg",
     ],
     colors: ["#111111", "#FFFFFF"],
     giftTags: ["birthday", "anniversary", "couple", "personalized", "under299"],
@@ -98,7 +94,6 @@ export const products: Product[] = [
     gallery: [
       "/showimg/1 (3).jpeg",
       "/bannerimg/1 (3).jpeg",
-      "/bannerimg/1 (1).jpeg",
     ],
     colors: ["#FFFFFF", "#F3E8DF"],
     giftTags: ["birthday", "under299", "personalized", "cute"],
@@ -127,8 +122,6 @@ export const products: Product[] = [
     gallery: [
       "/showimg/1 (4).jpeg",
       "/bannerimg/1 (4).jpeg",
-      "/bannerimg/1 (2).jpeg",
-      "/bannerimg/1 (1).jpeg",
     ],
     colors: ["#111111", "#FFFFFF"],
     giftTags: ["birthday", "anniversary", "couple", "personalized", "under299", "magic"],
@@ -160,7 +153,6 @@ export const products: Product[] = [
     gallery: [
       "/showimg/1 (5).jpeg",
       "/bannerimg/1 (5).jpeg",
-      "/bannerimg/1 (6).jpeg",
     ],
     colors: ["#FFFFFF", "#111111"],
     giftTags: ["gym", "office", "travel", "personalized", "bottle"],
@@ -188,7 +180,6 @@ export const products: Product[] = [
     gallery: [
       "/showimg/1 (6).jpeg",
       "/bannerimg/1 (6).jpeg",
-      "/bannerimg/1 (5).jpeg",
     ],
     colors: ["#111111", "#475569"],
     giftTags: ["sports", "gym", "trendy", "bottle"],
@@ -216,7 +207,6 @@ export const products: Product[] = [
     gallery: [
       "/showimg/1 (7).jpeg",
       "/bannerimg/1 (7).jpeg",
-      "/bannerimg/1 (5).jpeg",
     ],
     colors: ["#FFFFFF", "#111111"],
     giftTags: ["travel", "compact", "bottle", "personalized"],
@@ -244,7 +234,6 @@ export const products: Product[] = [
     gallery: [
       "/showimg/1 (9).jpeg",
       "/bannerimg/1 (9).jpeg",
-      "/bannerimg/1 (5).jpeg",
     ],
     colors: ["#1E293B", "#FFFFFF"],
     giftTags: ["sports", "stainless", "bottle", "active"],
